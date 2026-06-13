@@ -424,6 +424,19 @@ function loadData(){
       nextId=d.nextId||(items.length?Math.max(...items.map(i=>i.id))+1:1);
       nextBoId=d.nextBoId||(backorders.length?Math.max(...backorders.map(b=>b.id))+1:1);
       customTypes=d.customTypes||[];
+      // Migration: bring in any catalog items added since this data was saved
+      // (e.g. wine/beer/beverages/ingredients/supplies added in a later version),
+      // without touching existing items' saved qty/price/edits.
+      const existingIds=new Set(items.map(i=>i.id));
+      let migrated=false;
+      SEED_ITEMS.forEach(seed=>{
+        if(!existingIds.has(seed.id)){items.push({...seed});migrated=true;}
+      });
+      items.forEach(i=>{if(i.archived===undefined)i.archived=false;});
+      if(migrated){
+        nextId=Math.max(nextId,...items.map(i=>i.id))+1;
+        saveData();
+      }
     } else {
       items=SEED_ITEMS.map(i=>({...i}));
       nextId=SEED_ITEMS.length+1;nextBoId=1;
@@ -479,27 +492,70 @@ function locBadge(loc){
   return'<span class="badge badge-cat">'+label+'</span>';
 }
 
-function updateSummary(){
-  const active=items.filter(i=>!i.archived);
-  const total=active.length,low=active.filter(i=>status(i)==='low').length,out=active.filter(i=>status(i)==='out').length;
-  const openBO=backorders.filter(b=>!b.resolved).length;
+function updateSummary(filtered){
+  filtered=filtered||items.filter(i=>!i.archived);
+  const activeTotal=items.filter(i=>!i.archived).length;
+  const total=filtered.length,low=filtered.filter(i=>status(i)==='low').length,out=filtered.filter(i=>status(i)==='out').length;
+  const filteredIds=new Set(filtered.map(i=>i.id));
+  const openBOAll=backorders.filter(b=>!b.resolved).length;
+  const openBOFiltered=backorders.filter(b=>!b.resolved&&filteredIds.has(b.itemId)).length;
+  const itemsValue=total===activeTotal?`${total}`:`${total}<span style="font-size:13px;color:var(--text2);font-weight:400"> / ${activeTotal}</span>`;
   document.getElementById('summaryGrid').innerHTML=`
-    <div class="metric"><div class="metric-label">Items</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Items</div><div class="metric-value">${itemsValue}</div></div>
     <div class="metric"><div class="metric-label">Low / Out</div><div class="metric-value warn">${low+out}</div></div>
-    <div class="metric"><div class="metric-label">Backorders</div><div class="metric-value bo">${openBO}</div></div>
+    <div class="metric"><div class="metric-label">Backorders</div><div class="metric-value bo">${openBOFiltered}</div></div>
   `;
-  document.getElementById('boCountBadge').textContent=openBO>0?`(${openBO})`:'';
+  document.getElementById('boCountBadge').textContent=openBOAll>0?`(${openBOAll})`:'';
 }
 
 function refreshTypeFilter(){
   const sel=document.getElementById('filterType'),cur=sel.value;
-  const used=[...new Set(items.map(i=>i.type).filter(Boolean))].sort();
+  const cat=document.getElementById('filterCat').value;
+  const pool=cat?items.filter(i=>i.cat===cat):items;
+  const used=[...new Set(pool.map(i=>i.type).filter(Boolean))].sort();
+  const stillValid=used.includes(cur);
   sel.innerHTML='<option value="">All types</option>'+used.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
+  if(cur&&!stillValid){sel.value='';return true;}
+  return false;
 }
 
 // ── RENDER INVENTORY ──
 function sortedItems(){
   return [...items].sort((a,b)=>(a.sortOrder??9999)-(b.sortOrder??9999));
+}
+
+// ── FUZZY SEARCH ──
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  if(m===0)return n;
+  if(n===0)return m;
+  let prev=new Array(n+1);for(let j=0;j<=n;j++)prev[j]=j;
+  for(let i=1;i<=m;i++){
+    const cur=[i];
+    for(let j=1;j<=n;j++){
+      cur[j]=a[i-1]===b[j-1]?prev[j-1]:1+Math.min(prev[j],cur[j-1],prev[j-1]);
+    }
+    prev=cur;
+  }
+  return prev[n];
+}
+function fuzzyThreshold(len){
+  if(len<=3)return 0;
+  if(len<=5)return 1;
+  if(len<=8)return 2;
+  return 3;
+}
+function matchesSearch(item,q){
+  const hayRaw=(item.name+' '+(item.type||'')+' '+(item.vendor||'')+' '+item.cat).toLowerCase();
+  if(hayRaw.includes(q))return true;
+  const clean=s=>s.replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  const hayWords=clean(hayRaw).split(' ').filter(Boolean);
+  const qWords=clean(q).split(' ').filter(Boolean);
+  if(!qWords.length)return false;
+  return qWords.every(qw=>hayWords.some(hw=>{
+    if(hw.includes(qw)||qw.includes(hw))return true;
+    return levenshtein(qw,hw)<=fuzzyThreshold(qw.length);
+  }));
 }
 
 function render(){
@@ -518,16 +574,14 @@ function render(){
       if(i.archived)return false;
       if(sf==='low'&&status(i)==='ok')return false;
     }
-    if(q){
-      const hay=(i.name+' '+(i.type||'')+' '+(i.vendor||'')+' '+i.cat).toLowerCase();
-      if(!hay.includes(q))return false;
-    }
+    if(q&&!matchesSearch(i,q))return false;
     return true;
   });
   const list=document.getElementById('inventoryList');
   if(!filtered.length){
     list.innerHTML=`<div class="empty">${items.length===0?'No items yet — tap <strong>Log delivery</strong> to start.':'No items match this filter.'}</div>`;
-    updateSummary();refreshTypeFilter();return;
+    if(refreshTypeFilter()){render();return;}
+    updateSummary(filtered);return;
   }
   // Group by category + type, preserving sort order within each group
   const groups={};
@@ -571,7 +625,8 @@ function render(){
   });
   list.innerHTML=html;
   if(reorderMode)attachDragHandlers();
-  updateSummary();refreshTypeFilter();
+  if(refreshTypeFilter()){render();return;}
+  updateSummary(filtered);
 }
 
 // ── DRAG TO REORDER ──
