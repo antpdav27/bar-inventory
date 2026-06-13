@@ -9,208 +9,205 @@
 <meta name="theme-color" content="#ffffff">
 <title>Bar Inventory</title>
 <style>
-  :root {
-    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeede9;
-    --text: #1a1a18; --text2: #6b6b68; --text3: #9b9b97;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --green-bg: #eaf3de; --green-text: #3b6d11;
-    --yellow-bg: #faeeda; --yellow-text: #854f0b;
-    --red-bg: #fcebeb; --red-text: #a32d2d;
-    --radius: 10px; --radius-sm: 7px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeede9;
+  --text:#1a1a18;--text2:#6b6b68;--text3:#9b9b97;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --green-bg:#eaf3de;--green-text:#3b6d11;
+  --yellow-bg:#faeeda;--yellow-text:#854f0b;
+  --red-bg:#fcebeb;--red-text:#a32d2d;
+  --blue-bg:#e8f0fe;--blue-text:#1a56db;
+  --radius:10px;--radius-sm:7px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#26261f;--bg3:#2e2e26;
+    --text:#f0efe8;--text2:#a8a8a0;--text3:#6e6e68;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+    --green-bg:#173404;--green-text:#c0dd97;
+    --yellow-bg:#412402;--yellow-text:#FAC775;
+    --red-bg:#501313;--red-text:#f09595;
+    --blue-bg:#1a2a4a;--blue-text:#93b4f5;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a; --bg2: #26261f; --bg3: #2e2e26;
-      --text: #f0efe8; --text2: #a8a8a0; --text3: #6e6e68;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
-      --green-bg: #173404; --green-text: #c0dd97;
-      --yellow-bg: #412402; --yellow-text: #FAC775;
-      --red-bg: #501313; --red-text: #f09595;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; min-height: 100vh; }
-
-  /* HEADER */
-  .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: calc(var(--safe-top) + 14px) 16px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
-  .header h1 { font-size: 18px; font-weight: 600; }
-  .save-pill { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
-  .save-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-text); flex-shrink: 0; }
-  .save-dot.saving { background: var(--yellow-text); }
-
-  /* TABS */
-  .tabs { background: var(--bg); display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; position: sticky; top: 57px; z-index: 49; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex-shrink: 0; padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
-
-  /* CONTENT */
-  .content { padding: 14px 12px calc(var(--safe-bottom) + 80px); max-width: 700px; margin: 0 auto; }
-
-  /* SUMMARY CARDS */
-  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
-  .metric { background: var(--bg); border-radius: var(--radius); padding: 11px 12px; border: 1px solid var(--border); }
-  .metric-label { font-size: 10px; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .metric-value { font-size: 22px; font-weight: 600; color: var(--text); }
-  .metric-value.warn { color: var(--yellow-text); }
-  .metric-value.danger { color: var(--red-text); }
-  .metric-value.bo { color: var(--yellow-text); }
-  .metric-value.sm { font-size: 15px; margin-top: 4px; }
-
-  /* CONTROLS */
-  .controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-  .controls select { flex: 1; min-width: 120px; font-size: 13px; padding: 8px 10px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
-  .btn-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-  .btn:active { opacity: 0.7; }
-  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); flex: 1; }
-  .btn-amber { background: var(--yellow-bg); color: var(--yellow-text); border-color: var(--yellow-text); flex: 1; }
-  .btn-sm { height: 34px; font-size: 13px; padding: 0 12px; }
-  .btn-icon { height: 34px; width: 34px; padding: 0; border-radius: var(--radius-sm); flex-shrink: 0; }
-
-  /* CARDS / LIST */
-  .card { background: var(--bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 8px; }
-  .item-row { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-  .item-row:last-child { border-bottom: none; }
-  .item-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .item-name { font-weight: 600; font-size: 15px; flex: 1; }
-  .item-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .item-row-bottom { display: flex; align-items: center; justify-content: space-between; }
-  .item-details { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
-
-  /* BADGE */
-  .badge { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 11px; font-weight: 600; }
-  .badge-ok { background: var(--green-bg); color: var(--green-text); }
-  .badge-low { background: var(--yellow-bg); color: var(--yellow-text); }
-  .badge-out { background: var(--red-bg); color: var(--red-text); }
-  .badge-bo { background: var(--yellow-bg); color: var(--yellow-text); }
-  .badge-cat { background: var(--bg2); color: var(--text2); }
-
-  /* QTY STEPPER */
-  .qty-cell { display: flex; align-items: center; gap: 8px; }
-  .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border2); background: var(--bg2); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); flex-shrink: 0; }
-  .qty-btn:active { opacity: 0.6; }
-  .qty-num { min-width: 28px; text-align: center; font-size: 16px; font-weight: 600; }
-
-  /* ORDER HISTORY ROWS */
-  .order-item { padding: 11px 14px; border-bottom: 1px solid var(--border); }
-  .order-item:last-child { border-bottom: none; }
-  .order-item-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
-  .order-item-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
-  .order-item.bo-row { background: var(--yellow-bg); }
-
-  /* SECTION NOTE */
-  .section-note { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
-
-  /* EMPTY */
-  .empty { padding: 40px 20px; text-align: center; color: var(--text2); font-size: 14px; }
-
-  /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--bg); border-radius: 20px 20px 0 0; padding: 20px 18px calc(var(--safe-bottom) + 24px); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 16px; }
-  .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
-  .form-row { margin-bottom: 13px; }
-  .form-row label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
-  .form-row input, .form-row select, .form-row textarea { width: 100%; font-size: 15px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
-  .form-row textarea { min-height: 60px; font-family: inherit; resize: vertical; }
-  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 13px; }
-  .form-row-2 label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
-  .form-row-2 input, .form-row-2 select { width: 100%; font-size: 15px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
-  .form-actions { display: flex; gap: 10px; margin-top: 16px; }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-  .section-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-
-  /* PENDING ITEMS IN MODAL */
-  .pending-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 10px; }
-  .pending-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; gap: 8px; }
-  .pending-row:last-child { border-bottom: none; }
-  .pending-row-name { font-weight: 500; flex: 1; }
-  .pending-row-meta { font-size: 12px; color: var(--text2); }
-  .pending-rm { background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
-  .pending-rm:active { color: var(--red-text); }
-
-  /* ADD ITEM FORM IN MODAL */
-  .add-item-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; }
-  .add-item-grid { display: grid; grid-template-columns: 1fr 70px; gap: 8px; margin-bottom: 8px; }
-  .add-item-grid2 { display: grid; grid-template-columns: 70px 80px 1fr; gap: 8px; margin-bottom: 8px; }
-  .add-item-box input, .add-item-box select { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
-  .add-item-box label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 3px; }
-  .new-item-fields { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .new-item-fields.show { display: block; }
-  .new-item-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-  .new-item-fields-grid input, .new-item-fields-grid select { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
-  .new-item-fields-grid label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 3px; }
-
-  /* AUTOCOMPLETE */
-  .autocomplete-wrap { position: relative; }
-  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 300; max-height: 180px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-  .autocomplete-item { padding: 12px 14px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); }
-  .autocomplete-item:last-child { border-bottom: none; }
-  .autocomplete-item:active { background: var(--bg2); }
-
-  /* BOTTOM ACTION BAR */
-  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 10px 16px calc(var(--safe-bottom) + 10px); display: flex; gap: 8px; z-index: 49; }
-
-  /* REORDER LIST */
-  .reorder-row { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-  .reorder-row:last-child { border-bottom: none; }
-  .reorder-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
-  .reorder-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
-  .reorder-need { font-size: 13px; font-weight: 600; color: var(--yellow-text); }
-
-  .item-count-note { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:15px;min-height:100vh;}
+.header{background:var(--bg);border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 14px) 16px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.header h1{font-size:18px;font-weight:600;}
+.save-pill{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+.save-dot{width:7px;height:7px;border-radius:50%;background:var(--green-text);flex-shrink:0;}
+.save-dot.saving{background:var(--yellow-text);}
+.tabs{background:var(--bg);display:flex;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:57px;z-index:49;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:11px 16px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);}
+.content{padding:14px 12px calc(var(--safe-bottom) + 80px);max-width:700px;margin:0 auto;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.metric{background:var(--bg);border-radius:var(--radius);padding:11px 12px;border:1px solid var(--border);}
+.metric-label{font-size:10px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;}
+.metric-value{font-size:22px;font-weight:600;}
+.metric-value.warn{color:var(--yellow-text);}
+.metric-value.danger{color:var(--red-text);}
+.metric-value.bo{color:var(--yellow-text);}
+.controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.controls select{flex:1;min-width:100px;font-size:13px;padding:8px 10px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 16px;height:42px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.btn:active{opacity:.7;}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);flex:1;}
+.btn-amber{background:var(--yellow-bg);color:var(--yellow-text);border-color:var(--yellow-text);flex:1;}
+.btn-sm{height:34px;font-size:13px;padding:0 12px;}
+.btn-icon{height:34px;width:34px;padding:0;border-radius:var(--radius-sm);flex-shrink:0;}
+/* ITEM CARDS */
+.group-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:8px;}
+.group-header{padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.reorder-mode-hint{font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;}
+.item-row{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;transition:background .15s;}
+.item-row:last-child{border-bottom:none;}
+.item-row.dragging{opacity:.4;background:var(--bg2);}
+.item-row.drag-over{background:var(--blue-bg);}
+.item-row-top{display:flex;align-items:center;gap:8px;}
+.drag-handle{font-size:18px;color:var(--text3);cursor:grab;flex-shrink:0;padding:2px 4px;display:none;touch-action:none;}
+.reorder-mode .drag-handle{display:block;}
+.reorder-mode .qty-cell{display:none;}
+.reorder-mode .btn-icon{display:none;}
+.item-name{font-weight:600;font-size:15px;flex:1;}
+.item-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.item-row-bottom{display:flex;align-items:center;justify-content:space-between;}
+.item-details{font-size:12px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;}
+.badge{display:inline-block;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:600;}
+.badge-ok{background:var(--green-bg);color:var(--green-text);}
+.badge-low{background:var(--yellow-bg);color:var(--yellow-text);}
+.badge-out{background:var(--red-bg);color:var(--red-text);}
+.badge-bo{background:var(--yellow-bg);color:var(--yellow-text);}
+.badge-cat{background:var(--bg2);color:var(--text2);}
+.badge-cage{background:var(--blue-bg);color:var(--blue-text);}
+.qty-cell{display:flex;align-items:center;gap:8px;}
+.qty-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);flex-shrink:0;}
+.qty-btn:active{opacity:.6;}
+.qty-num{min-width:28px;text-align:center;font-size:16px;font-weight:600;}
+/* REORDER TOGGLE */
+.reorder-toggle-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.toggle-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);}
+.toggle{position:relative;width:40px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--bg3);border-radius:12px;border:1px solid var(--border2);transition:.2s;}
+.toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:2px;bottom:2px;background:var(--text2);border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--text);border-color:var(--text);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(16px);background:var(--bg);}
+/* ORDER HISTORY */
+.order-item{padding:11px 14px;border-bottom:1px solid var(--border);}
+.order-item:last-child{border-bottom:none;}
+.order-item-name{font-weight:600;font-size:14px;margin-bottom:3px;}
+.order-item-meta{font-size:12px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;}
+.order-item.bo-row{background:var(--yellow-bg);}
+.section-note{font-size:12px;color:var(--text2);margin-bottom:10px;}
+.empty{padding:40px 20px;text-align:center;color:var(--text2);font-size:14px;}
+/* REORDER LIST */
+.reorder-group-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:8px;}
+.reorder-vendor-hdr{padding:8px 14px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2);border-bottom:1px solid var(--border);}
+.reorder-row{padding:12px 14px;border-bottom:1px solid var(--border);}
+.reorder-row:last-child{border-bottom:none;}
+.reorder-name{font-weight:600;font-size:14px;margin-bottom:3px;}
+.reorder-meta{font-size:12px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+.reorder-need{font-size:13px;font-weight:600;color:var(--yellow-text);}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 18px calc(var(--safe-bottom) + 24px);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px;}
+.modal h2{font-size:18px;font-weight:600;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:16px;}
+.form-row{margin-bottom:13px;}
+.form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+.form-row input,.form-row select,.form-row textarea{width:100%;font-size:15px;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
+.form-row textarea{min-height:60px;font-family:inherit;resize:vertical;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px;}
+.form-row-2 label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+.form-row-2 input,.form-row-2 select{width:100%;font-size:15px;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
+.form-actions{display:flex;gap:10px;margin-top:16px;}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.section-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.pending-list{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px;}
+.pending-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:14px;gap:8px;}
+.pending-row:last-child{border-bottom:none;}
+.pending-row-name{font-weight:500;flex:1;}
+.pending-row-meta{font-size:12px;color:var(--text2);}
+.pending-rm{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;}
+.pending-rm:active{color:var(--red-text);}
+.add-item-box{background:var(--bg2);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
+.add-item-grid{display:grid;grid-template-columns:1fr 70px;gap:8px;margin-bottom:8px;}
+.add-item-grid2{display:grid;grid-template-columns:70px 90px 1fr;gap:8px;margin-bottom:8px;}
+.add-item-box input,.add-item-box select{width:100%;font-size:14px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
+.add-item-box label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px;}
+.new-item-fields{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.new-item-fields.show{display:block;}
+.nif-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.nif-grid input,.nif-grid select{width:100%;font-size:14px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
+.nif-grid label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px;}
+.autocomplete-wrap{position:relative;}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);z-index:300;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.autocomplete-item{padding:12px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);}
+.autocomplete-item:last-child{border-bottom:none;}
+.autocomplete-item:active{background:var(--bg2);}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 16px calc(var(--safe-bottom) + 10px);display:flex;gap:8px;z-index:49;}
+.item-count-note{font-size:12px;color:var(--text2);margin-bottom:8px;}
+.inp-full{width:100%;font-size:14px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);}
 </style>
 </head>
 <body>
-
 <div class="header">
   <h1>🍸 Bar Inventory</h1>
   <div class="save-pill"><span class="save-dot" id="saveDot"></span><span id="saveText">Saved</span></div>
 </div>
-
-<div class="tabs" id="tabBar">
+<div class="tabs">
   <button class="tab active" onclick="switchTab('inventory')">Inventory</button>
   <button class="tab" onclick="switchTab('orders')">History</button>
   <button class="tab" onclick="switchTab('backorders')">Backorders <span id="boCountBadge"></span></button>
   <button class="tab" onclick="switchTab('reorder')">Reorder</button>
 </div>
-
 <div class="content">
+
+  <!-- INVENTORY TAB -->
   <div id="tab-inventory">
     <div class="summary-grid" id="summaryGrid"></div>
-    <div class="controls">
-      <select id="filterCat" onchange="render()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
-      <select id="filterType" onchange="render()"><option value="">All types</option></select>
-      <select id="filterStatus" onchange="render()"><option value="">All status</option><option value="low">Low / Out only</option></select>
+    <div class="reorder-toggle-bar">
+      <div class="controls" style="margin-bottom:0;flex:1">
+        <select id="filterCat" onchange="render()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option><option>Supplies</option></select>
+        <select id="filterType" onchange="render()"><option value="">All types</option></select>
+        <select id="filterLoc" onchange="render()"><option value="">All locations</option><option value="cage">Cage</option><option value="display">Display</option></select>
+        <select id="filterStatus" onchange="render()"><option value="">All status</option><option value="low">Low / Out only</option></select>
+      </div>
+      <label class="toggle-wrap" title="Drag to reorder bottles">
+        ↕️
+        <label class="toggle"><input type="checkbox" id="reorderModeToggle" onchange="toggleReorderMode()"><span class="toggle-slider"></span></label>
+      </label>
     </div>
     <div id="inventoryList"></div>
   </div>
 
+  <!-- HISTORY TAB -->
   <div id="tab-orders" style="display:none">
     <div class="controls">
       <select id="filterOrderVendor" onchange="renderOrders()"><option value="">All vendors</option></select>
-      <select id="filterOrderCat" onchange="renderOrders()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
+      <select id="filterOrderCat" onchange="renderOrders()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option><option>Supplies</option></select>
     </div>
-    <div class="card" id="ordersBody"></div>
+    <div class="group-card" id="ordersBody"></div>
   </div>
 
+  <!-- BACKORDERS TAB -->
   <div id="tab-backorders" style="display:none">
-    <p class="section-note">Items you ordered but the vendor didn't have. Mark received when they arrive.</p>
+    <p class="section-note">Items ordered but not received. Mark received when they arrive.</p>
     <div class="controls">
       <select id="filterBOStatus" onchange="renderBackorders()"><option value="open">Open only</option><option value="all">Show all</option></select>
     </div>
     <div id="backorderList"></div>
   </div>
 
+  <!-- REORDER TAB -->
   <div id="tab-reorder" style="display:none">
-    <p class="section-note">At or below par. Open backorders excluded.</p>
+    <p class="section-note">At or below reorder point. Grouped by vendor. Open backorders excluded.</p>
     <div id="reorderList"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-sm" onclick="copyReorderList()">📋 Copy list</button>
@@ -219,7 +216,6 @@
   </div>
 </div>
 
-<!-- BOTTOM ACTION BAR -->
 <div class="bottom-bar" id="bottomBar">
   <button class="btn btn-primary" onclick="openDelivery()">📦 Log delivery</button>
   <button class="btn btn-amber" onclick="openBulkBackorder()">⚠️ Log backorders</button>
@@ -261,22 +257,22 @@
       </div>
       <div class="new-item-fields" id="newItemExtra">
         <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:500">New item — set details:</div>
-        <div class="new-item-fields-grid">
-          <div><label>Liquor type</label>
-            <select id="new-item-type" onchange="toggleCustomType('new-item-type','new-item-type-custom','new-item-type-custom-row')"></select>
-          </div>
-          <div><label>Category</label>
-            <select id="new-item-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
-          </div>
-          <div><label>Par level</label><input type="number" id="new-item-par" value="3" min="0"></div>
+        <div class="nif-grid">
+          <div><label>Type</label><select id="new-item-type" onchange="toggleCustomType('new-item-type','new-item-type-custom','new-item-type-custom-row')"></select></div>
+          <div><label>Category</label><select id="new-item-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option><option>Supplies</option></select></div>
+          <div><label>Par level</label><input type="number" id="new-item-par" value="2" min="0" step="0.5"></div>
           <div><label>Unit</label><input type="text" id="new-item-unit" placeholder="bottle, case..."></div>
+        </div>
+        <div class="nif-grid">
+          <div><label>Location</label><select id="new-item-loc"><option value="display">Display</option><option value="cage">Cage</option><option value="storage">Storage</option></select></div>
+          <div><label>Reorder when below</label><input type="number" id="new-item-reorder-at" value="0.5" min="0" step="0.5"></div>
         </div>
         <div id="new-item-type-custom-row" style="display:none;margin-bottom:8px">
           <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Custom type</label>
-          <input type="text" id="new-item-type-custom" placeholder="e.g. Mezcal" style="width:100%;font-size:14px;padding:9px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg);color:var(--text)">
+          <input type="text" id="new-item-type-custom" placeholder="e.g. Mezcal" class="inp-full">
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="addDelRow()">+ Add item</button>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="addDelRow()">+ Add to delivery</button>
     </div>
     <div class="form-actions">
       <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
@@ -300,7 +296,7 @@
       </div>
       <div><label>Date ordered</label><input type="date" id="bo-date"></div>
     </div>
-    <div class="form-row"><label>Order notes (optional)</label><input type="text" id="bo-order-notes" placeholder="e.g. Rep said next week"></div>
+    <div class="form-row"><label>Order notes (optional)</label><input type="text" id="bo-order-notes" placeholder="e.g. Rep said next week" class="inp-full"></div>
     <div class="divider"></div>
     <div class="section-label">Items not received</div>
     <div class="pending-list" id="boPendingList" style="display:none"></div>
@@ -315,7 +311,7 @@
         </div>
         <div><label>Qty short</label><input type="number" id="new-bo-qty" min="1" value="1"></div>
       </div>
-      <div class="form-row" style="margin-bottom:0"><label>Item notes (optional)</label><input type="text" id="new-bo-notes" placeholder="e.g. 2 weeks out"></div>
+      <div class="form-row" style="margin-bottom:0"><label>Item notes</label><input type="text" id="new-bo-notes" placeholder="e.g. 2 weeks out" class="inp-full"></div>
       <button class="btn btn-amber" style="width:100%;margin-top:10px" onclick="addBoRow()">+ Add item</button>
     </div>
     <div class="form-actions">
@@ -325,7 +321,7 @@
   </div>
 </div>
 
-<!-- EDIT ITEM MODAL -->
+<!-- EDIT MODAL -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -334,8 +330,8 @@
     <input type="hidden" id="edit-id">
     <div class="form-row"><label>Item name</label><input type="text" id="edit-name"></div>
     <div class="form-row-2">
-      <div><label>Liquor type</label><select id="edit-type" onchange="toggleCustomType('edit-type','edit-type-custom','edit-type-custom-row')"></select></div>
-      <div><label>Category</label><select id="edit-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select></div>
+      <div><label>Type</label><select id="edit-type" onchange="toggleCustomType('edit-type','edit-type-custom','edit-type-custom-row')"></select></div>
+      <div><label>Category</label><select id="edit-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option><option>Supplies</option></select></div>
     </div>
     <div class="form-row" id="edit-type-custom-row" style="display:none"><label>Custom type</label><input type="text" id="edit-type-custom"></div>
     <div class="form-row-2">
@@ -344,11 +340,15 @@
     </div>
     <div class="form-row-2">
       <div><label>Price per unit ($)</label><input type="number" id="edit-price" min="0" step="0.01"></div>
-      <div><label>Par level</label><input type="number" id="edit-par" min="0"></div>
+      <div><label>Vendor</label><input type="text" id="edit-vendor"></div>
     </div>
     <div class="form-row-2">
-      <div><label>On hand qty</label><input type="number" id="edit-qty" min="0"></div>
-      <div><label>Vendor</label><input type="text" id="edit-vendor"></div>
+      <div><label>Par level</label><input type="number" id="edit-par" min="0" step="0.5"></div>
+      <div><label>Reorder when below</label><input type="number" id="edit-reorder-at" min="0" step="0.5"></div>
+    </div>
+    <div class="form-row-2">
+      <div><label>On hand qty</label><input type="number" id="edit-qty" min="0" step="0.5"></div>
+      <div><label>Location</label><select id="edit-loc"><option value="display">Display</option><option value="cage">Cage</option><option value="storage">Storage</option></select></div>
     </div>
     <div class="form-actions">
       <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
@@ -373,152 +373,283 @@
 </div>
 
 <script>
-// ── DATA ──
-let items = [], orders = [], backorders = [];
-let nextId = 1, nextBoId = 1, currentTab = 'inventory';
-let delRows = [], delRowId = 0;
-let boRows = [], boRowId = 0;
-let saveTimer = null;
+const SEED_ITEMS = [{"id":1,"name":"High Ground Vodka","type":"Vodka","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":12,"reorderAt":6,"qty":0,"price":null,"location":"cage"},{"id":2,"name":"Grey Goose","type":"Vodka","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":3,"name":"Ketel One","type":"Vodka","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":4,"name":"Tito's","type":"Vodka","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":12,"reorderAt":6,"qty":0,"price":null,"location":"cage"},{"id":5,"name":"Hendrick's","type":"Gin","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":6,"name":"Empress","type":"Gin","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":7,"name":"Tanqueray","type":"Gin","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":8,"name":"Bombay Sapphire","type":"Gin","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":9,"name":"Aviation","type":"Gin","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":3,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":10,"name":"Bacardi","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":11,"name":"Ron Zacapa","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":12,"name":"Malibu","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":13,"name":"Plant\u00e9ray","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":14,"name":"Sailor Jerry","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":15,"name":"Captain Morgan","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":16,"name":"Calypso 151","type":"Rum","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":17,"name":"Casamigos Joven","type":"Mezcal","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":18,"name":"400 Conejos","type":"Mezcal","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":19,"name":"Ojo de Tigre","type":"Mezcal","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":20,"name":"Momento Verde","type":"Mezcal","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":3,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":21,"name":"Avi\u00f3n Cristalino","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":22,"name":"Clase Azul A\u00f1ejo","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":23,"name":"Humano Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":24,"name":"Don Julio 1942","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":25,"name":"Clase Azul Ultra","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":26,"name":"Don Julio Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":27,"name":"Don Julio Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":28,"name":"Casamigos Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":29,"name":"Casamigos Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":30,"name":"Espol\u00f3n Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":31,"name":"Cazadores Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":12,"reorderAt":6,"qty":0,"price":null,"location":"cage"},{"id":32,"name":"Patr\u00f3n Silver","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":33,"name":"Maestro Dobel Diamante","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":34,"name":"Mijenta Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":35,"name":"Mi Campo Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":36,"name":"Lalo Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":37,"name":"Siete Leguas Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":38,"name":"Siete Leguas Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":39,"name":"Clase Azul Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":40,"name":"Tequila Ocho Plata","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":41,"name":"L\u00e1grimas del Valle Plata","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":42,"name":"El Perro Grande Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":43,"name":"El Perro Grande Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":44,"name":"Casamigos A\u00f1ejo","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":45,"name":"Don Fulano Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":46,"name":"G4 Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":47,"name":"Socorro Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":6,"reorderAt":3,"qty":0,"price":null,"location":"cage"},{"id":48,"name":"Don Julio 70","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":49,"name":"Fortaleza Blanco","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":50,"name":"Fortaleza Reposado","type":"Tequila","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":51,"name":"Hennessy VSOP","type":"Cognac","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":52,"name":"Azteca de Oro","type":"Brandy","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":53,"name":"Hennessy XO","type":"Cognac","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":54,"name":"R\u00e9my Martin XO","type":"Cognac","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":55,"name":"Pisco","type":"Brandy","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":56,"name":"Buffalo Trace","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":12,"reorderAt":6,"qty":0,"price":null,"location":"cage"},{"id":57,"name":"Woodford Reserve","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":58,"name":"1792","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":59,"name":"Elijah Craig","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":60,"name":"Angel's Envy","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":61,"name":"Maker's Mark","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":62,"name":"Barrell Bourbon","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":63,"name":"Knob Creek","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":64,"name":"Jefferson's Ocean","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":65,"name":"Basil Hayden","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":66,"name":"Sir Davis","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":67,"name":"Horse Soldier","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":68,"name":"Bulleit Bourbon","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":69,"name":"Jack Daniel's","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":70,"name":"Uncle Nearest","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":71,"name":"Tullamore Dew","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":72,"name":"Weller Green","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":73,"name":"Crown Royal","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":74,"name":"Crown Apple","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":75,"name":"Jameson","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":3,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":76,"name":"Eagle Rare","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":77,"name":"Woodford Rye","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":78,"name":"Bulleit Rye","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":79,"name":"Willett Rye","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":80,"name":"Green Spot","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":81,"name":"Yellow Spot","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":82,"name":"Blanton's","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":83,"name":"Elmer T. Lee","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":84,"name":"Weller CYPB","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":85,"name":"Weller 12","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":86,"name":"Weller Antique 107","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":87,"name":"WhistlePig 10","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":88,"name":"WhistlePig 12","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":89,"name":"Midwinter Night's Dram","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":90,"name":"Hibiki","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":91,"name":"Hakushu","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":92,"name":"Yamazaki","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":93,"name":"Stagg","type":"Bourbon","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":94,"name":"High West","type":"Whiskey","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":95,"name":"WhistlePig Piggyback","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":96,"name":"Sazerac Rye","type":"Rye","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":97,"name":"Laphroaig 10","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":98,"name":"Glenlivet 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":99,"name":"Glenlivet 14","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":100,"name":"Dalmore 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":101,"name":"Oban 14","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":102,"name":"Talisker 10","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":103,"name":"Ardbeg 10","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":104,"name":"Glenfiddich 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":105,"name":"Lagavulin 11 Charred Oak","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":106,"name":"Lagavulin 11","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":107,"name":"Glenmorangie 10","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":108,"name":"Buchanan's 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":109,"name":"Chivas 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":110,"name":"Monkey Shoulder","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":111,"name":"Johnnie Walker Black","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":112,"name":"Macallan 12 Double Cask","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":113,"name":"Macallan 15","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":114,"name":"Macallan 18","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":115,"name":"Balvenie 12","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":116,"name":"Balvenie 15","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":117,"name":"Lagavulin 16","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":118,"name":"Peat Monster","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":119,"name":"Buchanan's 18","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":120,"name":"Johnnie Walker Blue","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":121,"name":"Buchanan's Pineapple","type":"Scotch","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":122,"name":"J\u00e4germeister","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":123,"name":"Rumpleminze","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":124,"name":"Sweet Vermouth","type":"Vermouth","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":125,"name":"Dry Vermouth","type":"Vermouth","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":126,"name":"Baileys","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":127,"name":"Fireball","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":128,"name":"RumChata","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":129,"name":"Grind Espresso","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":130,"name":"Branca Menta","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":131,"name":"Frangelico","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":132,"name":"Lillet Blanc","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":133,"name":"Liquore Strega","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":134,"name":"Luxardo","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":135,"name":"Green Chartreuse","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":136,"name":"G\u00e9n\u00e9py","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":137,"name":"Campari","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":138,"name":"Carpano Antica","type":"Vermouth","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":139,"name":"Grand Marnier","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":140,"name":"Chambord","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":141,"name":"Disaronno","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":142,"name":"Giffard Passionfruit","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":143,"name":"Vanilla Madagascar","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":144,"name":"St. Germain","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":145,"name":"Skrewball","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":146,"name":"Cr\u00e8me de Noyaux","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":147,"name":"Licor 43","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":148,"name":"Fernet Branca","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":149,"name":"Blue Cura\u00e7ao","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":150,"name":"Peach Schnapps","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":151,"name":"Triple Sec","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":1,"reorderAt":1,"qty":0,"price":null,"location":"cage"},{"id":152,"name":"Sour Apple","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":153,"name":"Melon","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":154,"name":"Watermelon","type":"Liqueur","cat":"Spirits","vendor":"Juanito's","size":"750 mL","unit":"bottle","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":155,"name":"Dos Equis","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":156,"name":"Corona","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":157,"name":"Miller Lite","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":158,"name":"Coors Banquet","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":159,"name":"Lucky Buddha","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":160,"name":"Lone Star","type":"Lager","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"},{"id":161,"name":"High Noon Vodka Seltzer","type":"Seltzer","cat":"Beer","vendor":"Juanito's","size":"750 mL","unit":"case","par":2,"reorderAt":1,"qty":0,"price":null,"location":"display"}];
 
-const BUILTIN_TYPES = ['Vodka','Tequila','Mezcal','Whiskey','Bourbon','Scotch','Rum','Gin','Brandy','Cognac','Triple Sec','Amaretto','Kahlúa','Baileys','Vermouth','Champagne / Sparkling','IPA','Lager','Ale','Stout / Porter','Seltzer / Hard Seltzer','Cider','Red Wine','White Wine','Rosé'];
-let customTypes = [];
-function allTypes() { return [...BUILTIN_TYPES, ...customTypes, 'Other (type below)']; }
+let items=[],orders=[],backorders=[];
+let nextId=1,nextBoId=1,currentTab='inventory';
+let delRows=[],delRowId=0,boRows=[],boRowId=0,saveTimer=null;
+let reorderMode=false,dragSrcId=null;
 
-function today() { return new Date().toISOString().split('T')[0]; }
-function fmtDate(d) { if (!d) return '—'; return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}); }
-function fmtPrice(p) { if (p == null || p === '') return '—'; return '$' + Number(p).toFixed(2); }
-function allVendors() { return [...new Set([...items.map(i=>i.vendor), ...orders.map(o=>o.vendor)].filter(Boolean))]; }
-function allItemNames() { return items.map(i => i.name); }
+const BUILTIN_TYPES=['Vodka','Tequila','Mezcal','Whiskey','Bourbon','Scotch','Rum','Gin','Brandy','Cognac','Rye','Vermouth','Liqueur','Lager','IPA','Ale','Stout / Porter','Seltzer','Cider','Red Wine','White Wine','Rosé','Champagne / Sparkling','Bar supply','Cleaning supply','Paper goods'];
+let customTypes=[];
+function allTypes(){return[...new Set([...BUILTIN_TYPES,...customTypes])];}
 
-// ── STORAGE (localStorage for standalone file) ──
-function saveData() {
+function today(){return new Date().toISOString().split('T')[0];}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function fmtPrice(p){if(p==null||p==='')return'—';return'$'+Number(p).toFixed(2);}
+function allVendors(){return[...new Set([...items.map(i=>i.vendor),...orders.map(o=>o.vendor)].filter(Boolean))];}
+function allItemNames(){return items.map(i=>i.name);}
+
+// ── STORAGE ──
+function saveData(){
   setSaveStatus('saving');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem('bar_inventory_v1', JSON.stringify({ items, orders, backorders, nextId, nextBoId, customTypes }));
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem('bar_inventory_v3',JSON.stringify({items,orders,backorders,nextId,nextBoId,customTypes}));
       setSaveStatus('saved');
-    } catch(e) { setSaveStatus('error'); }
-  }, 600);
+    }catch(e){setSaveStatus('error');}
+  },600);
 }
-function loadData() {
-  try {
-    const raw = localStorage.getItem('bar_inventory_v1');
-    if (raw) {
-      const d = JSON.parse(raw);
-      items = d.items || []; orders = d.orders || []; backorders = d.backorders || [];
-      nextId = d.nextId || (items.length ? Math.max(...items.map(i=>i.id))+1 : 1);
-      nextBoId = d.nextBoId || (backorders.length ? Math.max(...backorders.map(b=>b.id))+1 : 1);
-      customTypes = d.customTypes || [];
+function loadData(){
+  try{
+    const raw=localStorage.getItem('bar_inventory_v3');
+    if(raw){
+      const d=JSON.parse(raw);
+      items=d.items||[];orders=d.orders||[];backorders=d.backorders||[];
+      nextId=d.nextId||(items.length?Math.max(...items.map(i=>i.id))+1:1);
+      nextBoId=d.nextBoId||(backorders.length?Math.max(...backorders.map(b=>b.id))+1:1);
+      customTypes=d.customTypes||[];
+    } else {
+      items=SEED_ITEMS.map(i=>({...i}));
+      nextId=SEED_ITEMS.length+1;nextBoId=1;
+      saveData();
     }
-  } catch(e) {}
+  }catch(e){items=SEED_ITEMS.map(i=>({...i}));nextId=SEED_ITEMS.length+1;}
   render();
 }
-function setSaveStatus(s) {
-  const dot = document.getElementById('saveDot'), text = document.getElementById('saveText');
-  if (s === 'saving') { dot.className='save-dot saving'; text.textContent='Saving...'; }
-  else if (s === 'saved') { dot.className='save-dot'; text.textContent='Saved'; }
-  else { dot.className='save-dot'; dot.style.background='#a32d2d'; text.textContent='Error'; }
+function setSaveStatus(s){
+  const dot=document.getElementById('saveDot'),text=document.getElementById('saveText');
+  if(s==='saving'){dot.className='save-dot saving';text.textContent='Saving...';}
+  else if(s==='saved'){dot.className='save-dot';text.textContent='Saved';}
+  else{dot.className='save-dot';dot.style.background='#a32d2d';text.textContent='Error';}
 }
 
 // ── TYPES ──
-function buildTypeSelect(id, cur) {
-  const sel = document.getElementById(id); if (!sel) return;
-  sel.innerHTML = '<option value="">— select type —</option>' + allTypes().map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+function buildTypeSelect(id,cur){
+  const sel=document.getElementById(id);if(!sel)return;
+  const types=[...allTypes(),'Other (type below)'];
+  sel.innerHTML='<option value="">— select type —</option>'+types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
 }
-function toggleCustomType(selId, inputId, rowId) {
-  const isOther = document.getElementById(selId).value === 'Other (type below)';
-  const row = document.getElementById(rowId); if (row) row.style.display = isOther ? '' : 'none';
+function toggleCustomType(selId,inputId,rowId){
+  const isOther=document.getElementById(selId).value==='Other (type below)';
+  const row=document.getElementById(rowId);if(row)row.style.display=isOther?'':'none';
 }
-function resolveType(selId, inputId) {
-  const val = document.getElementById(selId).value;
-  if (val === 'Other (type below)') {
-    const c = document.getElementById(inputId).value.trim();
-    if (c && !BUILTIN_TYPES.includes(c) && !customTypes.includes(c)) customTypes.push(c);
-    return c || 'Other';
+function resolveType(selId,inputId){
+  const val=document.getElementById(selId).value;
+  if(val==='Other (type below)'){
+    const c=document.getElementById(inputId).value.trim();
+    if(c&&!BUILTIN_TYPES.includes(c)&&!customTypes.includes(c))customTypes.push(c);
+    return c||'Other';
   }
   return val;
 }
 
 // ── STATUS ──
-function status(item) { if (item.qty===0) return 'out'; if (item.qty<=item.par) return 'low'; return 'ok'; }
-function hasOpenBackorder(itemId) { return backorders.some(b=>b.itemId===itemId&&!b.resolved); }
-function statusBadge(item) {
-  const s=status(item), bo=hasOpenBackorder(item.id);
-  if (bo&&s!=='ok') return '<span class="badge badge-bo">Backordered</span>';
-  if (s==='out') return '<span class="badge badge-out">Out</span>';
-  if (s==='low') return '<span class="badge badge-low">Low</span>';
-  return '<span class="badge badge-ok">OK</span>';
+function needsReorder(item){return item.qty<=item.reorderAt;}
+function status(item){if(item.qty===0)return'out';if(needsReorder(item))return'low';return'ok';}
+function hasOpenBackorder(itemId){return backorders.some(b=>b.itemId===itemId&&!b.resolved);}
+function statusBadge(item){
+  const s=status(item),bo=hasOpenBackorder(item.id);
+  if(bo&&s!=='ok')return'<span class="badge badge-bo">Backordered</span>';
+  if(s==='out')return'<span class="badge badge-out">Out</span>';
+  if(s==='low')return'<span class="badge badge-low">Low</span>';
+  return'<span class="badge badge-ok">OK</span>';
+}
+function locBadge(loc){
+  if(loc==='cage')return'<span class="badge badge-cage">Cage</span>';
+  if(loc==='storage')return'<span class="badge badge-cat">Storage</span>';
+  return'';
 }
 
-function updateSummary() {
-  const total=items.length, low=items.filter(i=>status(i)==='low').length, out=items.filter(i=>status(i)==='out').length;
+function updateSummary(){
+  const total=items.length,low=items.filter(i=>status(i)==='low').length,out=items.filter(i=>status(i)==='out').length;
   const openBO=backorders.filter(b=>!b.resolved).length;
-  const lastDel=orders.filter(o=>o.type==='delivery').slice().sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('summaryGrid').innerHTML = `
+  document.getElementById('summaryGrid').innerHTML=`
     <div class="metric"><div class="metric-label">Items</div><div class="metric-value">${total}</div></div>
     <div class="metric"><div class="metric-label">Low / Out</div><div class="metric-value warn">${low+out}</div></div>
     <div class="metric"><div class="metric-label">Backorders</div><div class="metric-value bo">${openBO}</div></div>
   `;
-  document.getElementById('boCountBadge').textContent = openBO > 0 ? `(${openBO})` : '';
+  document.getElementById('boCountBadge').textContent=openBO>0?`(${openBO})`:'';
 }
 
-function refreshTypeFilter() {
-  const sel=document.getElementById('filterType'), cur=sel.value;
+function refreshTypeFilter(){
+  const sel=document.getElementById('filterType'),cur=sel.value;
   const used=[...new Set(items.map(i=>i.type).filter(Boolean))].sort();
   sel.innerHTML='<option value="">All types</option>'+used.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
 }
 
-function render() {
-  const cat=document.getElementById('filterCat').value, type=document.getElementById('filterType').value, sf=document.getElementById('filterStatus').value;
-  let filtered=items.filter(i=>{ if(cat&&i.cat!==cat)return false; if(type&&i.type!==type)return false; if(sf==='low'&&status(i)==='ok')return false; return true; });
-  const list=document.getElementById('inventoryList');
-  if (!filtered.length) {
-    list.innerHTML=`<div class="empty">${items.length===0?'No items yet.<br>Tap <strong>Log delivery</strong> to start.':'No items match this filter.'}</div>`;
-    updateSummary(); refreshTypeFilter(); return;
-  }
-  list.innerHTML = filtered.map(i=>`
-    <div class="card item-row">
-      <div class="item-row-top">
-        <span class="item-name">${i.name}</span>
-        ${statusBadge(i)}
-      </div>
-      <div class="item-meta">
-        ${i.type?`<span class="badge badge-cat">${i.type}</span>`:''}
-        <span class="badge badge-cat">${i.cat}</span>
-        ${i.size?`<span style="font-size:12px;color:var(--text2)">${i.size}</span>`:''}
-      </div>
-      <div class="item-row-bottom">
-        <div class="item-details">
-          <span>Par: ${i.par}</span>
-          ${i.price!=null?`<span>${fmtPrice(i.price)}</span>`:''}
-          <span>${i.vendor||''}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="qty-cell">
-            <button class="qty-btn" onclick="adjustQty(${i.id},-1)">−</button>
-            <span class="qty-num">${i.qty}</span>
-            <button class="qty-btn" onclick="adjustQty(${i.id},1)">+</button>
-          </div>
-          <button class="btn btn-icon btn-sm" onclick="openEdit(${i.id})">✏️</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-  updateSummary(); refreshTypeFilter();
+// ── RENDER INVENTORY ──
+function sortedItems(){
+  return [...items].sort((a,b)=>(a.sortOrder??9999)-(b.sortOrder??9999));
 }
 
-function adjustQty(id, delta) {
-  const item=items.find(i=>i.id===id); if (!item) return;
-  item.qty=Math.max(0,item.qty+delta); render(); if(currentTab==='reorder')renderReorder(); saveData();
+function render(){
+  const cat=document.getElementById('filterCat').value,
+        type=document.getElementById('filterType').value,
+        loc=document.getElementById('filterLoc').value,
+        sf=document.getElementById('filterStatus').value;
+  let filtered=sortedItems().filter(i=>{
+    if(cat&&i.cat!==cat)return false;
+    if(type&&i.type!==type)return false;
+    if(loc&&i.location!==loc)return false;
+    if(sf==='low'&&status(i)==='ok')return false;
+    return true;
+  });
+  const list=document.getElementById('inventoryList');
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty">${items.length===0?'No items yet — tap <strong>Log delivery</strong> to start.':'No items match this filter.'}</div>`;
+    updateSummary();refreshTypeFilter();return;
+  }
+  // Group by category + type, preserving sort order within each group
+  const groups={};
+  filtered.forEach(i=>{
+    const g=i.cat+(i.type?' — '+i.type:'');
+    if(!groups[g])groups[g]=[];
+    groups[g].push(i);
+  });
+  // Sort groups by first item's sortOrder so groups themselves appear in shelf order
+  const groupEntries=Object.entries(groups).sort(([,a],[,b])=>(a[0].sortOrder??9999)-(b[0].sortOrder??9999));
+  let html='';
+  groupEntries.forEach(([grp,gitems])=>{
+    html+=`<div class="group-card" data-group="${grp}">`;
+    html+=`<div class="group-header">${grp}${reorderMode?'<span class="reorder-mode-hint">drag ↕ to reorder</span>':''}</div>`;
+    gitems.forEach(i=>{
+      html+=`<div class="item-row${reorderMode?' reorder-mode':''}" data-id="${i.id}" draggable="${reorderMode}">
+        <div class="item-row-top">
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <span class="item-name">${i.name}</span>
+          ${statusBadge(i)}
+        </div>
+        <div class="item-meta">${locBadge(i.location)}<span style="font-size:12px;color:var(--text2)">${i.size||''}</span><span class="badge badge-cat">${i.unit}</span></div>
+        <div class="item-row-bottom">
+          <div class="item-details">
+            <span>Par: ${i.par} · reorder ≤${i.reorderAt}</span>
+            ${i.price!=null?`<span>${fmtPrice(i.price)}</span>`:''}
+            <span>${i.vendor||''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="qty-cell">
+              <button class="qty-btn" onclick="adjustQty(${i.id},-1)">−</button>
+              <span class="qty-num">${i.qty}</span>
+              <button class="qty-btn" onclick="adjustQty(${i.id},1)">+</button>
+            </div>
+            <button class="btn btn-icon btn-sm" onclick="openEdit(${i.id})">✏️</button>
+          </div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  list.innerHTML=html;
+  if(reorderMode)attachDragHandlers();
+  updateSummary();refreshTypeFilter();
+}
+
+// ── DRAG TO REORDER ──
+function toggleReorderMode(){
+  reorderMode=document.getElementById('reorderModeToggle').checked;
+  render();
+}
+
+function attachDragHandlers(){
+  // Use touch-friendly drag on mobile
+  document.querySelectorAll('.item-row[data-id]').forEach(row=>{
+    row.addEventListener('dragstart',onDragStart);
+    row.addEventListener('dragover',onDragOver);
+    row.addEventListener('dragleave',onDragLeave);
+    row.addEventListener('drop',onDrop);
+    row.addEventListener('dragend',onDragEnd);
+    // Touch support
+    const handle=row.querySelector('.drag-handle');
+    if(handle){
+      handle.addEventListener('touchstart',onTouchStart,{passive:true});
+    }
+  });
+}
+
+let touchDragId=null,touchPlaceholder=null,touchClone=null;
+
+function onDragStart(e){
+  dragSrcId=parseInt(this.dataset.id);
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function onDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  this.classList.add('drag-over');
+}
+function onDragLeave(){this.classList.remove('drag-over');}
+function onDrop(e){
+  e.preventDefault();
+  const targetId=parseInt(this.dataset.id);
+  if(dragSrcId!=null&&dragSrcId!==targetId)moveItem(dragSrcId,targetId);
+  this.classList.remove('drag-over');
+}
+function onDragEnd(){
+  document.querySelectorAll('.item-row').forEach(r=>{r.classList.remove('dragging','drag-over');});
+  dragSrcId=null;
+}
+
+function onTouchStart(e){
+  const row=this.closest('.item-row');
+  touchDragId=parseInt(row.dataset.id);
+  const rect=row.getBoundingClientRect();
+  touchClone=row.cloneNode(true);
+  touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:.8;z-index:999;pointer-events:none;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);`;
+  document.body.appendChild(touchClone);
+  document.addEventListener('touchmove',onTouchMove,{passive:false});
+  document.addEventListener('touchend',onTouchEnd);
+}
+function onTouchMove(e){
+  e.preventDefault();
+  const t=e.touches[0];
+  if(touchClone){touchClone.style.top=(t.clientY-30)+'px';touchClone.style.left=(t.clientX-100)+'px';}
+  document.querySelectorAll('.item-row[data-id]').forEach(r=>{
+    const rect=r.getBoundingClientRect();
+    if(t.clientY>rect.top&&t.clientY<rect.bottom&&parseInt(r.dataset.id)!==touchDragId){
+      r.classList.add('drag-over');
+    } else {
+      r.classList.remove('drag-over');
+    }
+  });
+}
+function onTouchEnd(e){
+  const t=e.changedTouches[0];
+  let targetId=null;
+  document.querySelectorAll('.item-row[data-id]').forEach(r=>{
+    const rect=r.getBoundingClientRect();
+    if(t.clientY>rect.top&&t.clientY<rect.bottom)targetId=parseInt(r.dataset.id);
+    r.classList.remove('drag-over');
+  });
+  if(touchClone){touchClone.remove();touchClone=null;}
+  document.removeEventListener('touchmove',onTouchMove);
+  document.removeEventListener('touchend',onTouchEnd);
+  if(targetId&&targetId!==touchDragId)moveItem(touchDragId,targetId);
+  touchDragId=null;
+}
+
+function moveItem(srcId,targetId){
+  const src=items.find(i=>i.id===srcId),tgt=items.find(i=>i.id===targetId);
+  if(!src||!tgt)return;
+  const srcOrder=src.sortOrder??0,tgtOrder=tgt.sortOrder??0;
+  // Swap sort orders
+  src.sortOrder=tgtOrder;tgt.sortOrder=srcOrder;
+  render();saveData();
+}
+
+function adjustQty(id,delta){
+  const item=items.find(i=>i.id===id);if(!item)return;
+  item.qty=Math.max(0,parseFloat((item.qty+delta).toFixed(1)));
+  render();if(currentTab==='reorder')renderReorder();saveData();
 }
 
 // ── DELIVERY ──
-function openDelivery() {
+function openDelivery(){
   delRows=[];
-  document.getElementById('del-vendor').value='';
+  ['del-vendor','new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('del-date').value=today();
-  ['new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-item-qty').value=1;
   document.getElementById('newItemExtra').classList.remove('show');
   document.getElementById('new-item-type-custom-row').style.display='none';
@@ -526,162 +657,171 @@ function openDelivery() {
   renderDelRows();
   document.getElementById('deliveryModal').classList.add('open');
 }
-function renderDelRows() {
-  const list=document.getElementById('delPendingList'), count=document.getElementById('delItemCount');
-  if (!delRows.length) { list.style.display='none'; count.textContent=''; return; }
+function renderDelRows(){
+  const list=document.getElementById('delPendingList'),count=document.getElementById('delItemCount');
+  if(!delRows.length){list.style.display='none';count.textContent='';return;}
   list.style.display='';
-  list.innerHTML=delRows.map(r=>`
-    <div class="pending-row">
-      <div>
-        <div class="pending-row-name">${r.name}${r.isNew?' <span style="font-size:11px;color:var(--text2)">(new)</span>':''}</div>
-        <div class="pending-row-meta">${r.size||''} · qty ${r.qty} · ${fmtPrice(r.price)}</div>
-      </div>
-      <button class="pending-rm" onclick="removeDelRow(${r.tempId})">×</button>
-    </div>`).join('');
+  list.innerHTML=delRows.map(r=>`<div class="pending-row">
+    <div><div class="pending-row-name">${r.name}${r.isNew?' <span style="font-size:11px;color:var(--text2)">(new)</span>':''}</div>
+    <div class="pending-row-meta">${r.size||''} · qty ${r.qty} · ${fmtPrice(r.price)}</div></div>
+    <button class="pending-rm" onclick="removeDelRow(${r.tempId})">×</button>
+  </div>`).join('');
   count.textContent=`${delRows.length} item${delRows.length!==1?'s':''} added`;
 }
-function addDelRow() {
-  const name=document.getElementById('new-item-name').value.trim(); if(!name){document.getElementById('new-item-name').focus();return;}
-  const size=document.getElementById('new-item-size').value.trim(), qty=parseInt(document.getElementById('new-item-qty').value)||1;
-  const pv=document.getElementById('new-item-price').value, price=pv!==''?parseFloat(pv):null;
+function addDelRow(){
+  const name=document.getElementById('new-item-name').value.trim();if(!name){document.getElementById('new-item-name').focus();return;}
+  const size=document.getElementById('new-item-size').value.trim(),qty=parseInt(document.getElementById('new-item-qty').value)||1;
+  const pv=document.getElementById('new-item-price').value,price=pv!==''?parseFloat(pv):null;
   const existing=items.find(i=>i.name.toLowerCase()===name.toLowerCase());
   const type=existing?existing.type:resolveType('new-item-type','new-item-type-custom');
   const cat=existing?existing.cat:document.getElementById('new-item-cat').value;
-  const par=existing?existing.par:(parseInt(document.getElementById('new-item-par').value)||3);
+  const par=existing?existing.par:(parseFloat(document.getElementById('new-item-par').value)||2);
   const unit=existing?existing.unit:(document.getElementById('new-item-unit').value.trim()||'bottle');
-  delRows.push({tempId:delRowId++,name:existing?existing.name:name,size:size||(existing?existing.size:''),qty,price:price!=null?price:(existing?existing.price:null),isNew:!existing,type,cat,par,unit});
+  const loc=existing?existing.location:document.getElementById('new-item-loc').value;
+  const reorderAt=existing?existing.reorderAt:(parseFloat(document.getElementById('new-item-reorder-at').value)||0.5);
+  delRows.push({tempId:delRowId++,name:existing?existing.name:name,size:size||(existing?existing.size:''),qty,price:price!=null?price:(existing?existing.price:null),isNew:!existing,type,cat,par,unit,loc,reorderAt});
   ['new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-item-qty').value=1;
   document.getElementById('newItemExtra').classList.remove('show');
-  document.getElementById('new-item-type-custom-row').style.display='none';
-  renderDelRows(); document.getElementById('new-item-name').focus();
+  renderDelRows();document.getElementById('new-item-name').focus();
 }
 function removeDelRow(tempId){delRows=delRows.filter(r=>r.tempId!==tempId);renderDelRows();}
-function saveDelivery() {
-  const vendor=document.getElementById('del-vendor').value.trim(), date=document.getElementById('del-date').value;
-  if(!vendor){alert('Enter a vendor name.');return;} if(!delRows.length){alert('Add at least one item.');return;}
+function saveDelivery(){
+  const vendor=document.getElementById('del-vendor').value.trim(),date=document.getElementById('del-date').value;
+  if(!vendor){alert('Enter a vendor name.');return;}if(!delRows.length){alert('Add at least one item.');return;}
   delRows.forEach(r=>{
     let item=items.find(i=>i.name.toLowerCase()===r.name.toLowerCase());
-    if(!item){item={id:nextId++,name:r.name,type:r.type||'',cat:r.cat,vendor,size:r.size,unit:r.unit||'bottle',price:r.price,par:r.par,qty:r.qty};items.push(item);}
-    else{item.qty+=r.qty;item.vendor=vendor;if(r.size)item.size=r.size;if(r.price!=null)item.price=r.price;}
+    if(!item){
+      const maxSort=items.length?Math.max(...items.map(i=>i.sortOrder??0)):0;
+      item={id:nextId++,name:r.name,type:r.type||'',cat:r.cat,vendor,size:r.size,unit:r.unit||'bottle',price:r.price,par:r.par,reorderAt:r.reorderAt,qty:r.qty,location:r.loc||'display',sortOrder:maxSort+1};
+      items.push(item);
+    } else {
+      item.qty+=r.qty;item.vendor=vendor;
+      if(r.size)item.size=r.size;if(r.price!=null)item.price=r.price;
+    }
     orders.push({date,itemId:item.id,qty:r.qty,vendor,cat:item.cat,price:r.price!=null?r.price:item.price,size:item.size,type:'delivery'});
   });
-  closeModals(); render(); saveData();
+  closeModals();render();saveData();
 }
 
 // ── BULK BACKORDER ──
-function openBulkBackorder() {
+function openBulkBackorder(){
   boRows=[];
-  document.getElementById('bo-vendor').value='';
+  ['bo-vendor','bo-order-notes','new-bo-name','new-bo-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bo-date').value=today();
-  document.getElementById('bo-order-notes').value='';
-  ['new-bo-name','new-bo-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-bo-qty').value=1;
   renderBoRows();
   document.getElementById('bulkBoModal').classList.add('open');
 }
-function renderBoRows() {
-  const list=document.getElementById('boPendingList'), count=document.getElementById('boItemCount');
-  if (!boRows.length){list.style.display='none';count.textContent='';return;}
+function renderBoRows(){
+  const list=document.getElementById('boPendingList'),count=document.getElementById('boItemCount');
+  if(!boRows.length){list.style.display='none';count.textContent='';return;}
   list.style.display='';
-  list.innerHTML=boRows.map(r=>`
-    <div class="pending-row">
-      <div><div class="pending-row-name">${r.name}</div><div class="pending-row-meta">Qty short: ${r.qty}${r.notes?' · '+r.notes:''}</div></div>
-      <button class="pending-rm" onclick="removeBoRow(${r.tempId})">×</button>
-    </div>`).join('');
+  list.innerHTML=boRows.map(r=>`<div class="pending-row">
+    <div><div class="pending-row-name">${r.name}</div><div class="pending-row-meta">Qty short: ${r.qty}${r.notes?' · '+r.notes:''}</div></div>
+    <button class="pending-rm" onclick="removeBoRow(${r.tempId})">×</button>
+  </div>`).join('');
   count.textContent=`${boRows.length} item${boRows.length!==1?'s':''} added`;
 }
-function addBoRow() {
-  const name=document.getElementById('new-bo-name').value.trim(); if(!name){document.getElementById('new-bo-name').focus();return;}
-  const qty=parseInt(document.getElementById('new-bo-qty').value)||1, notes=document.getElementById('new-bo-notes').value.trim();
+function addBoRow(){
+  const name=document.getElementById('new-bo-name').value.trim();if(!name){document.getElementById('new-bo-name').focus();return;}
+  const qty=parseInt(document.getElementById('new-bo-qty').value)||1,notes=document.getElementById('new-bo-notes').value.trim();
   boRows.push({tempId:boRowId++,name,qty,notes});
   ['new-bo-name','new-bo-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-bo-qty').value=1;
-  renderBoRows(); document.getElementById('new-bo-name').focus();
+  renderBoRows();document.getElementById('new-bo-name').focus();
 }
 function removeBoRow(tempId){boRows=boRows.filter(r=>r.tempId!==tempId);renderBoRows();}
-function saveBulkBackorder() {
-  const vendor=document.getElementById('bo-vendor').value.trim(), date=document.getElementById('bo-date').value, orderNotes=document.getElementById('bo-order-notes').value.trim();
-  if(!vendor){alert('Enter a vendor name.');return;} if(!boRows.length){alert('Add at least one item.');return;}
+function saveBulkBackorder(){
+  const vendor=document.getElementById('bo-vendor').value.trim(),date=document.getElementById('bo-date').value,orderNotes=document.getElementById('bo-order-notes').value.trim();
+  if(!vendor){alert('Enter a vendor name.');return;}if(!boRows.length){alert('Add at least one item.');return;}
   boRows.forEach(r=>{
     const item=items.find(i=>i.name.toLowerCase()===r.name.toLowerCase());
     const notes=[r.notes,orderNotes].filter(Boolean).join(' — ');
     backorders.push({id:nextBoId++,itemId:item?item.id:-1,itemName:r.name,qty:r.qty,date,vendor,cat:item?item.cat:'Spirits',notes,resolved:false,resolvedDate:null,resolvedQty:null});
   });
-  closeModals(); render(); saveData();
+  closeModals();render();saveData();
 }
 
 // ── EDIT ──
-function openEdit(id) {
-  const item=items.find(i=>i.id===id); if(!item)return;
+function openEdit(id){
+  const item=items.find(i=>i.id===id);if(!item)return;
   document.getElementById('edit-id').value=id;
   document.getElementById('edit-name').value=item.name;
   document.getElementById('edit-size').value=item.size||'';
   document.getElementById('edit-unit').value=item.unit||'';
   document.getElementById('edit-price').value=item.price!=null?item.price:'';
   document.getElementById('edit-par').value=item.par;
+  document.getElementById('edit-reorder-at').value=item.reorderAt!=null?item.reorderAt:0.5;
   document.getElementById('edit-qty').value=item.qty;
   document.getElementById('edit-vendor').value=item.vendor||'';
+  document.getElementById('edit-loc').value=item.location||'display';
   buildTypeSelect('edit-type',item.type||'');
   document.getElementById('edit-cat').value=item.cat;
   document.getElementById('edit-type-custom-row').style.display='none';
-  document.getElementById('edit-type-custom').value='';
   document.getElementById('editModal').classList.add('open');
 }
-function saveEdit() {
-  const id=parseInt(document.getElementById('edit-id').value), item=items.find(i=>i.id===id); if(!item)return;
+function saveEdit(){
+  const id=parseInt(document.getElementById('edit-id').value),item=items.find(i=>i.id===id);if(!item)return;
   item.name=document.getElementById('edit-name').value.trim()||item.name;
   item.type=resolveType('edit-type','edit-type-custom');
   item.cat=document.getElementById('edit-cat').value;
   item.size=document.getElementById('edit-size').value.trim();
   item.unit=document.getElementById('edit-unit').value.trim()||'bottle';
-  const p=document.getElementById('edit-price').value; item.price=p!==''?parseFloat(p):null;
-  item.par=parseInt(document.getElementById('edit-par').value)||0;
-  item.qty=parseInt(document.getElementById('edit-qty').value)||0;
+  const p=document.getElementById('edit-price').value;item.price=p!==''?parseFloat(p):null;
+  item.par=parseFloat(document.getElementById('edit-par').value)||0;
+  item.reorderAt=parseFloat(document.getElementById('edit-reorder-at').value)||0.5;
+  item.qty=parseFloat(document.getElementById('edit-qty').value)||0;
   item.vendor=document.getElementById('edit-vendor').value.trim();
-  closeModals(); render(); saveData();
+  item.location=document.getElementById('edit-loc').value;
+  closeModals();render();saveData();
 }
 
 // ── BACKORDERS ──
-function renderBackorders() {
+function renderBackorders(){
   const showAll=document.getElementById('filterBOStatus').value==='all';
   let filtered=(showAll?backorders:backorders.filter(b=>!b.resolved)).slice().sort((a,b)=>b.date.localeCompare(a.date));
   const list=document.getElementById('backorderList');
   if(!filtered.length){list.innerHTML='<div class="empty">No open backorders. 👍</div>';return;}
   list.innerHTML=filtered.map(b=>{
-    const item=items.find(i=>i.id===b.itemId), name=item?item.name:b.itemName||'Unknown', unit=item?item.unit:'unit';
-    const action=b.resolved?`<span style="font-size:12px;color:var(--text2);font-style:italic">Received ${fmtDate(b.resolvedDate)}</span>`:`<button class="btn btn-sm" onclick="openResolveBackorder(${b.id})">✓ Mark received</button>`;
-    return`<div class="card item-row${b.resolved?'':' bo-row'}">
-      <div class="item-row-top"><span class="item-name">${name}</span><span class="badge badge-cat">${b.cat}</span></div>
-      <div class="item-details">
-        <span>Qty short: ${b.qty} ${unit}</span>
-        <span>${fmtDate(b.date)}</span>
-        <span>${b.vendor||''}</span>
+    const item=items.find(i=>i.id===b.itemId),name=item?item.name:b.itemName||'Unknown',unit=item?item.unit:'unit';
+    const action=b.resolved
+      ?`<span style="font-size:12px;color:var(--text2);font-style:italic">Received ${fmtDate(b.resolvedDate)}</span>`
+      :`<button class="btn btn-sm" onclick="openResolveBackorder(${b.id})">✓ Mark received</button>`;
+    return`<div class="group-card">
+      <div style="padding:12px 14px;${b.resolved?'':'background:var(--yellow-bg);'}border-radius:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:600;font-size:15px">${name}</span>
+          <span class="badge badge-cat">${b.cat}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <span>Qty short: ${b.qty} ${unit}</span><span>${fmtDate(b.date)}</span><span>${b.vendor||''}</span>
+        </div>
+        ${b.notes?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px">${b.notes}</div>`:''}
+        ${action}
       </div>
-      ${b.notes?`<div style="font-size:12px;color:var(--text2);margin-top:2px">${b.notes}</div>`:''}
-      <div style="margin-top:8px">${action}</div>
     </div>`;
   }).join('');
 }
-function openResolveBackorder(id) {
+function openResolveBackorder(id){
   const bo=backorders.find(b=>b.id===id);
   document.getElementById('bor-id').value=id;
   document.getElementById('bor-qty').value=bo?bo.qty:1;
   document.getElementById('bor-date').value=today();
   document.getElementById('boReceiveModal').classList.add('open');
 }
-function resolveBackorder() {
-  const id=parseInt(document.getElementById('bor-id').value), qty=parseInt(document.getElementById('bor-qty').value)||1, date=document.getElementById('bor-date').value;
-  const bo=backorders.find(b=>b.id===id); if(!bo)return;
+function resolveBackorder(){
+  const id=parseInt(document.getElementById('bor-id').value),qty=parseInt(document.getElementById('bor-qty').value)||1,date=document.getElementById('bor-date').value;
+  const bo=backorders.find(b=>b.id===id);if(!bo)return;
   bo.resolved=true;bo.resolvedDate=date;bo.resolvedQty=qty;
-  const item=items.find(i=>i.id===bo.itemId); if(item)item.qty+=qty;
+  const item=items.find(i=>i.id===bo.itemId);if(item)item.qty+=qty;
   orders.push({date,itemId:bo.itemId,qty,vendor:bo.vendor,cat:bo.cat,price:null,size:item?item.size:null,type:'received (BO)'});
-  closeModals(); render(); if(currentTab==='backorders')renderBackorders(); saveData();
+  closeModals();render();if(currentTab==='backorders')renderBackorders();saveData();
 }
 
 // ── ORDERS ──
-function renderOrders() {
-  const vendor=document.getElementById('filterOrderVendor').value, cat=document.getElementById('filterOrderCat').value;
+function renderOrders(){
+  const vendor=document.getElementById('filterOrderVendor').value,cat=document.getElementById('filterOrderCat').value;
   const all=[
     ...orders.map(o=>({...o,_t:o.type})),
     ...backorders.map(b=>({date:b.date,itemId:b.itemId,itemName:b.itemName,qty:b.qty,vendor:b.vendor,cat:b.cat,price:null,_t:'backorder'})),
@@ -691,14 +831,13 @@ function renderOrders() {
   const body=document.getElementById('ordersBody');
   if(!filtered.length){body.innerHTML='<div class="empty">No order history yet.</div>';return;}
   body.innerHTML=filtered.map(o=>{
-    const item=items.find(i=>i.id===o.itemId), name=item?item.name:(o.itemName||'Unknown');
+    const item=items.find(i=>i.id===o.itemId),name=item?item.name:(o.itemName||'Unknown');
     const typeLbl=o._t==='delivery'?'Delivery':o._t==='backorder'?'Backordered':'Received (BO)';
     const typeCls=o._t==='delivery'?'badge-ok':o._t==='backorder'?'badge-bo':'badge-cat';
     return`<div class="order-item${o._t==='backorder'?' bo-row':''}">
       <div class="order-item-name">${name}</div>
       <div class="order-item-meta">
-        <span>${fmtDate(o.date)}</span>
-        <span>${o.qty||'?'} ${item?item.unit:''}</span>
+        <span>${fmtDate(o.date)}</span><span>${o.qty||'?'} ${item?item.unit:''}</span>
         ${o.price!=null?`<span>${fmtPrice(o.price)}</span>`:''}
         <span class="badge ${typeCls}">${typeLbl}</span>
         <span>${o.vendor||''}</span>
@@ -707,33 +846,38 @@ function renderOrders() {
   }).join('');
 }
 
-// ── REORDER ──
-function renderReorder() {
-  const needy=items.filter(i=>status(i)!=='ok'&&!hasOpenBackorder(i.id));
+// ── REORDER LIST ──
+function renderReorder(){
+  const needy=sortedItems().filter(i=>needsReorder(i)&&!hasOpenBackorder(i.id));
   const list=document.getElementById('reorderList');
-  if(!needy.length){list.innerHTML='<div class="empty">All items above par. 🎉</div>';return;}
-  list.innerHTML=needy.map(i=>{
-    const need=Math.max(1,(i.par-i.qty)+Math.ceil(i.par*0.5));
-    return`<div class="card reorder-row">
-      <div class="reorder-name">${i.name}</div>
-      <div class="reorder-meta"><span>${i.size||i.unit}</span><span>Have: ${i.qty}</span><span>Par: ${i.par}</span><span>${i.vendor||''}</span></div>
-      <div class="reorder-need">Order +${need} ${i.unit}${i.price?' — est. '+fmtPrice(i.price*need):''}</div>
-    </div>`;
-  }).join('');
+  if(!needy.length){list.innerHTML='<div class="empty">All items above reorder point. 🎉</div>';return;}
+  const byVendor={};
+  needy.forEach(i=>{const v=i.vendor||'Unknown vendor';if(!byVendor[v])byVendor[v]=[];byVendor[v].push(i);});
+  list.innerHTML=Object.entries(byVendor).sort(([a],[b])=>a.localeCompare(b)).map(([vendor,vitems])=>`
+    <div class="reorder-group-card">
+      <div class="reorder-vendor-hdr">📦 ${vendor}</div>
+      ${vitems.map(i=>{
+        const need=Math.max(1,i.par-i.qty);
+        return`<div class="reorder-row">
+          <div class="reorder-name">${i.name}</div>
+          <div class="reorder-meta"><span>${i.size||i.unit}</span><span>Have: ${i.qty}</span><span>Par: ${i.par}</span>${locBadge(i.location)}</div>
+          <div class="reorder-need">Order +${need} ${i.unit}${i.price?' — est. '+fmtPrice(i.price*need):''}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
 }
 
 // ── TAB SWITCHING ──
-function switchTab(tab) {
+function switchTab(tab){
   currentTab=tab;
   ['inventory','orders','backorders','reorder'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===tab?'':'none';});
   document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',['inventory','orders','backorders','reorder'][i]===tab);});
-  const bottomBar=document.getElementById('bottomBar');
-  bottomBar.style.display = tab==='inventory'?'flex':'none';
+  document.getElementById('bottomBar').style.display=tab==='inventory'?'flex':'none';
   if(tab==='orders'){populateVendorFilter();renderOrders();}
   if(tab==='backorders')renderBackorders();
   if(tab==='reorder')renderReorder();
 }
-function populateVendorFilter() {
+function populateVendorFilter(){
   const vendors=[...new Set(orders.map(o=>o.vendor).filter(Boolean))];
   document.getElementById('filterOrderVendor').innerHTML='<option value="">All vendors</option>'+vendors.map(v=>`<option>${v}</option>`).join('');
 }
@@ -755,7 +899,7 @@ function pickAc(acId,val){
     if(ex){document.getElementById('new-item-size').value=ex.size||'';if(ex.price)document.getElementById('new-item-price').value=ex.price;}
     document.getElementById('newItemExtra').classList.toggle('show',!ex);
     if(!ex)buildTypeSelect('new-item-type','');
-    hideAc(acId); document.getElementById('new-item-qty').focus();
+    hideAc(acId);document.getElementById('new-item-qty').focus();
   }
   else if(acId==='bo-item-ac'){document.getElementById('new-bo-name').value=val;hideAc(acId);document.getElementById('new-bo-qty').focus();}
 }
@@ -772,13 +916,16 @@ function acBoItem(){const q=document.getElementById('new-bo-name').value.toLower
 
 // ── UTILS ──
 function copyReorderList(){
-  const needy=items.filter(i=>status(i)!=='ok'&&!hasOpenBackorder(i.id));
+  const needy=sortedItems().filter(i=>needsReorder(i)&&!hasOpenBackorder(i.id));
   if(!needy.length){alert('Nothing on the reorder list.');return;}
-  navigator.clipboard.writeText(needy.map(i=>`${i.name} (${i.size||i.unit}) — need +${Math.max(1,(i.par-i.qty)+Math.ceil(i.par*0.5))} [${i.vendor||''}]`).join('\n')).catch(()=>alert('Copy failed — try the export instead.'));
+  const byVendor={};
+  needy.forEach(i=>{const v=i.vendor||'Unknown';if(!byVendor[v])byVendor[v]=[];byVendor[v].push(i);});
+  const text=Object.entries(byVendor).map(([v,its])=>`${v}:\n`+its.map(i=>`  ${i.name} — order +${Math.max(1,i.par-i.qty)} ${i.unit}`).join('\n')).join('\n\n');
+  navigator.clipboard.writeText(text).catch(()=>alert('Copy failed — try Export CSV.'));
 }
 function exportCSV(){
-  const rows=[['Item','Type','Category','Size/Pack','Unit','On Hand','Par','Price','Vendor','Status','Open Backorder']];
-  items.forEach(i=>rows.push([i.name,i.type||'',i.cat,i.size||'',i.unit,i.qty,i.par,i.price!=null?i.price:'',i.vendor||'',status(i),hasOpenBackorder(i.id)?'Yes':'No']));
+  const rows=[['Item','Type','Category','Location','Size/Pack','Unit','On Hand','Par','Reorder At','Price','Vendor','Status']];
+  sortedItems().forEach(i=>rows.push([i.name,i.type||'',i.cat,i.location||'',i.size||'',i.unit,i.qty,i.par,i.reorderAt!=null?i.reorderAt:'',i.price!=null?i.price:'',i.vendor||'',status(i)]));
   const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='bar_inventory.csv';a.click();
 }
