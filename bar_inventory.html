@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bar Inventory">
+<meta name="theme-color" content="#ffffff">
+<title>Bar Inventory</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeede9;
+    --text: #1a1a18; --text2: #6b6b68; --text3: #9b9b97;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --green-bg: #eaf3de; --green-text: #3b6d11;
+    --yellow-bg: #faeeda; --yellow-text: #854f0b;
+    --red-bg: #fcebeb; --red-text: #a32d2d;
+    --radius: 10px; --radius-sm: 7px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #26261f; --bg3: #2e2e26;
+      --text: #f0efe8; --text2: #a8a8a0; --text3: #6e6e68;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --green-bg: #173404; --green-text: #c0dd97;
+      --yellow-bg: #412402; --yellow-text: #FAC775;
+      --red-bg: #501313; --red-text: #f09595;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: calc(var(--safe-top) + 14px) 16px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .save-pill { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .save-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-text); flex-shrink: 0; }
+  .save-dot.saving { background: var(--yellow-text); }
+
+  /* TABS */
+  .tabs { background: var(--bg); display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; position: sticky; top: 57px; z-index: 49; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* CONTENT */
+  .content { padding: 14px 12px calc(var(--safe-bottom) + 80px); max-width: 700px; margin: 0 auto; }
+
+  /* SUMMARY CARDS */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .metric { background: var(--bg); border-radius: var(--radius); padding: 11px 12px; border: 1px solid var(--border); }
+  .metric-label { font-size: 10px; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text); }
+  .metric-value.warn { color: var(--yellow-text); }
+  .metric-value.danger { color: var(--red-text); }
+  .metric-value.bo { color: var(--yellow-text); }
+  .metric-value.sm { font-size: 15px; margin-top: 4px; }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .controls select { flex: 1; min-width: 120px; font-size: 13px; padding: 8px 10px; height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn:active { opacity: 0.7; }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); flex: 1; }
+  .btn-amber { background: var(--yellow-bg); color: var(--yellow-text); border-color: var(--yellow-text); flex: 1; }
+  .btn-sm { height: 34px; font-size: 13px; padding: 0 12px; }
+  .btn-icon { height: 34px; width: 34px; padding: 0; border-radius: var(--radius-sm); flex-shrink: 0; }
+
+  /* CARDS / LIST */
+  .card { background: var(--bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 8px; }
+  .item-row { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+  .item-row:last-child { border-bottom: none; }
+  .item-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .item-name { font-weight: 600; font-size: 15px; flex: 1; }
+  .item-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .item-row-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .item-details { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .badge-ok { background: var(--green-bg); color: var(--green-text); }
+  .badge-low { background: var(--yellow-bg); color: var(--yellow-text); }
+  .badge-out { background: var(--red-bg); color: var(--red-text); }
+  .badge-bo { background: var(--yellow-bg); color: var(--yellow-text); }
+  .badge-cat { background: var(--bg2); color: var(--text2); }
+
+  /* QTY STEPPER */
+  .qty-cell { display: flex; align-items: center; gap: 8px; }
+  .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border2); background: var(--bg2); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text); flex-shrink: 0; }
+  .qty-btn:active { opacity: 0.6; }
+  .qty-num { min-width: 28px; text-align: center; font-size: 16px; font-weight: 600; }
+
+  /* ORDER HISTORY ROWS */
+  .order-item { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  .order-item:last-child { border-bottom: none; }
+  .order-item-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .order-item-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; }
+  .order-item.bo-row { background: var(--yellow-bg); }
+
+  /* SECTION NOTE */
+  .section-note { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+
+  /* EMPTY */
+  .empty { padding: 40px 20px; text-align: center; color: var(--text2); font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0; padding: 20px 18px calc(var(--safe-bottom) + 24px); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 16px; }
+  .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+  .form-row { margin-bottom: 13px; }
+  .form-row label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; font-size: 15px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
+  .form-row textarea { min-height: 60px; font-family: inherit; resize: vertical; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 13px; }
+  .form-row-2 label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .form-row-2 input, .form-row-2 select { width: 100%; font-size: 15px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
+  .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  /* PENDING ITEMS IN MODAL */
+  .pending-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 10px; }
+  .pending-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; gap: 8px; }
+  .pending-row:last-child { border-bottom: none; }
+  .pending-row-name { font-weight: 500; flex: 1; }
+  .pending-row-meta { font-size: 12px; color: var(--text2); }
+  .pending-rm { background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .pending-rm:active { color: var(--red-text); }
+
+  /* ADD ITEM FORM IN MODAL */
+  .add-item-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; }
+  .add-item-grid { display: grid; grid-template-columns: 1fr 70px; gap: 8px; margin-bottom: 8px; }
+  .add-item-grid2 { display: grid; grid-template-columns: 70px 80px 1fr; gap: 8px; margin-bottom: 8px; }
+  .add-item-box input, .add-item-box select { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
+  .add-item-box label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+  .new-item-fields { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .new-item-fields.show { display: block; }
+  .new-item-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .new-item-fields-grid input, .new-item-fields-grid select { width: 100%; font-size: 14px; padding: 9px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--bg); color: var(--text); }
+  .new-item-fields-grid label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); z-index: 300; max-height: 180px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .autocomplete-item { padding: 12px 14px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:active { background: var(--bg2); }
+
+  /* BOTTOM ACTION BAR */
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 10px 16px calc(var(--safe-bottom) + 10px); display: flex; gap: 8px; z-index: 49; }
+
+  /* REORDER LIST */
+  .reorder-row { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  .reorder-row:last-child { border-bottom: none; }
+  .reorder-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .reorder-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .reorder-need { font-size: 13px; font-weight: 600; color: var(--yellow-text); }
+
+  .item-count-note { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🍸 Bar Inventory</h1>
+  <div class="save-pill"><span class="save-dot" id="saveDot"></span><span id="saveText">Saved</span></div>
+</div>
+
+<div class="tabs" id="tabBar">
+  <button class="tab active" onclick="switchTab('inventory')">Inventory</button>
+  <button class="tab" onclick="switchTab('orders')">History</button>
+  <button class="tab" onclick="switchTab('backorders')">Backorders <span id="boCountBadge"></span></button>
+  <button class="tab" onclick="switchTab('reorder')">Reorder</button>
+</div>
+
+<div class="content">
+  <div id="tab-inventory">
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="controls">
+      <select id="filterCat" onchange="render()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
+      <select id="filterType" onchange="render()"><option value="">All types</option></select>
+      <select id="filterStatus" onchange="render()"><option value="">All status</option><option value="low">Low / Out only</option></select>
+    </div>
+    <div id="inventoryList"></div>
+  </div>
+
+  <div id="tab-orders" style="display:none">
+    <div class="controls">
+      <select id="filterOrderVendor" onchange="renderOrders()"><option value="">All vendors</option></select>
+      <select id="filterOrderCat" onchange="renderOrders()"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
+    </div>
+    <div class="card" id="ordersBody"></div>
+  </div>
+
+  <div id="tab-backorders" style="display:none">
+    <p class="section-note">Items you ordered but the vendor didn't have. Mark received when they arrive.</p>
+    <div class="controls">
+      <select id="filterBOStatus" onchange="renderBackorders()"><option value="open">Open only</option><option value="all">Show all</option></select>
+    </div>
+    <div id="backorderList"></div>
+  </div>
+
+  <div id="tab-reorder" style="display:none">
+    <p class="section-note">At or below par. Open backorders excluded.</p>
+    <div id="reorderList"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm" onclick="copyReorderList()">📋 Copy list</button>
+      <button class="btn btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM ACTION BAR -->
+<div class="bottom-bar" id="bottomBar">
+  <button class="btn btn-primary" onclick="openDelivery()">📦 Log delivery</button>
+  <button class="btn btn-amber" onclick="openBulkBackorder()">⚠️ Log backorders</button>
+</div>
+
+<!-- DELIVERY MODAL -->
+<div class="modal-overlay" id="deliveryModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Log delivery</h2>
+    <p class="modal-sub">One vendor. Add each item received.</p>
+    <div class="form-row-2">
+      <div><label>Vendor</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="del-vendor" placeholder="e.g. Juanito's" autocomplete="off" oninput="acVendor('del-vendor','vendor-ac')" onblur="setTimeout(()=>hideAc('vendor-ac'),200)">
+          <div class="autocomplete-list" id="vendor-ac" style="display:none"></div>
+        </div>
+      </div>
+      <div><label>Date</label><input type="date" id="del-date"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label">Items received</div>
+    <div class="pending-list" id="delPendingList" style="display:none"></div>
+    <div class="item-count-note" id="delItemCount"></div>
+    <div class="add-item-box">
+      <div class="add-item-grid">
+        <div><label>Item name</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="new-item-name" placeholder="Type or pick..." autocomplete="off" oninput="acItem()" onblur="setTimeout(()=>hideAc('item-ac'),200)">
+            <div class="autocomplete-list" id="item-ac" style="display:none"></div>
+          </div>
+        </div>
+        <div><label>Qty</label><input type="number" id="new-item-qty" min="1" value="1"></div>
+      </div>
+      <div class="add-item-grid2">
+        <div><label>Price ($)</label><input type="number" id="new-item-price" min="0" step="0.01" placeholder="0.00"></div>
+        <div><label>Size/Pack</label><input type="text" id="new-item-size" placeholder="750 mL"></div>
+        <div></div>
+      </div>
+      <div class="new-item-fields" id="newItemExtra">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:500">New item — set details:</div>
+        <div class="new-item-fields-grid">
+          <div><label>Liquor type</label>
+            <select id="new-item-type" onchange="toggleCustomType('new-item-type','new-item-type-custom','new-item-type-custom-row')"></select>
+          </div>
+          <div><label>Category</label>
+            <select id="new-item-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select>
+          </div>
+          <div><label>Par level</label><input type="number" id="new-item-par" value="3" min="0"></div>
+          <div><label>Unit</label><input type="text" id="new-item-unit" placeholder="bottle, case..."></div>
+        </div>
+        <div id="new-item-type-custom-row" style="display:none;margin-bottom:8px">
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Custom type</label>
+          <input type="text" id="new-item-type-custom" placeholder="e.g. Mezcal" style="width:100%;font-size:14px;padding:9px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg);color:var(--text)">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="addDelRow()">+ Add item</button>
+    </div>
+    <div class="form-actions">
+      <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveDelivery()">✓ Save delivery</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK BACKORDER MODAL -->
+<div class="modal-overlay" id="bulkBoModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Log backorders</h2>
+    <p class="modal-sub">One vendor, multiple items out of stock.</p>
+    <div class="form-row-2">
+      <div><label>Vendor</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="bo-vendor" placeholder="e.g. Juanito's" autocomplete="off" oninput="acVendor('bo-vendor','bo-vendor-ac')" onblur="setTimeout(()=>hideAc('bo-vendor-ac'),200)">
+          <div class="autocomplete-list" id="bo-vendor-ac" style="display:none"></div>
+        </div>
+      </div>
+      <div><label>Date ordered</label><input type="date" id="bo-date"></div>
+    </div>
+    <div class="form-row"><label>Order notes (optional)</label><input type="text" id="bo-order-notes" placeholder="e.g. Rep said next week"></div>
+    <div class="divider"></div>
+    <div class="section-label">Items not received</div>
+    <div class="pending-list" id="boPendingList" style="display:none"></div>
+    <div class="item-count-note" id="boItemCount"></div>
+    <div class="add-item-box">
+      <div class="add-item-grid">
+        <div><label>Item name</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="new-bo-name" placeholder="Type or pick..." autocomplete="off" oninput="acBoItem()" onblur="setTimeout(()=>hideAc('bo-item-ac'),200)">
+            <div class="autocomplete-list" id="bo-item-ac" style="display:none"></div>
+          </div>
+        </div>
+        <div><label>Qty short</label><input type="number" id="new-bo-qty" min="1" value="1"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:0"><label>Item notes (optional)</label><input type="text" id="new-bo-notes" placeholder="e.g. 2 weeks out"></div>
+      <button class="btn btn-amber" style="width:100%;margin-top:10px" onclick="addBoRow()">+ Add item</button>
+    </div>
+    <div class="form-actions">
+      <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-amber" style="flex:2" onclick="saveBulkBackorder()">✓ Save backorders</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Edit item</h2>
+    <p class="modal-sub">Fix any details. Won't change past order history.</p>
+    <input type="hidden" id="edit-id">
+    <div class="form-row"><label>Item name</label><input type="text" id="edit-name"></div>
+    <div class="form-row-2">
+      <div><label>Liquor type</label><select id="edit-type" onchange="toggleCustomType('edit-type','edit-type-custom','edit-type-custom-row')"></select></div>
+      <div><label>Category</label><select id="edit-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Bar supplies</option></select></div>
+    </div>
+    <div class="form-row" id="edit-type-custom-row" style="display:none"><label>Custom type</label><input type="text" id="edit-type-custom"></div>
+    <div class="form-row-2">
+      <div><label>Size / Pack</label><input type="text" id="edit-size"></div>
+      <div><label>Unit</label><input type="text" id="edit-unit"></div>
+    </div>
+    <div class="form-row-2">
+      <div><label>Price per unit ($)</label><input type="number" id="edit-price" min="0" step="0.01"></div>
+      <div><label>Par level</label><input type="number" id="edit-par" min="0"></div>
+    </div>
+    <div class="form-row-2">
+      <div><label>On hand qty</label><input type="number" id="edit-qty" min="0"></div>
+      <div><label>Vendor</label><input type="text" id="edit-vendor"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveEdit()">✓ Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESOLVE BO MODAL -->
+<div class="modal-overlay" id="boReceiveModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Mark as received</h2>
+    <div class="form-row"><label>Quantity actually received</label><input type="number" id="bor-qty" min="1" value="1"></div>
+    <div class="form-row"><label>Date received</label><input type="date" id="bor-date"></div>
+    <input type="hidden" id="bor-id">
+    <div class="form-actions">
+      <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="resolveBackorder()">✓ Mark received</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+let items = [], orders = [], backorders = [];
+let nextId = 1, nextBoId = 1, currentTab = 'inventory';
+let delRows = [], delRowId = 0;
+let boRows = [], boRowId = 0;
+let saveTimer = null;
+
+const BUILTIN_TYPES = ['Vodka','Tequila','Mezcal','Whiskey','Bourbon','Scotch','Rum','Gin','Brandy','Cognac','Triple Sec','Amaretto','Kahlúa','Baileys','Vermouth','Champagne / Sparkling','IPA','Lager','Ale','Stout / Porter','Seltzer / Hard Seltzer','Cider','Red Wine','White Wine','Rosé'];
+let customTypes = [];
+function allTypes() { return [...BUILTIN_TYPES, ...customTypes, 'Other (type below)']; }
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) { if (!d) return '—'; return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}); }
+function fmtPrice(p) { if (p == null || p === '') return '—'; return '$' + Number(p).toFixed(2); }
+function allVendors() { return [...new Set([...items.map(i=>i.vendor), ...orders.map(o=>o.vendor)].filter(Boolean))]; }
+function allItemNames() { return items.map(i => i.name); }
+
+// ── STORAGE (localStorage for standalone file) ──
+function saveData() {
+  setSaveStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem('bar_inventory_v1', JSON.stringify({ items, orders, backorders, nextId, nextBoId, customTypes }));
+      setSaveStatus('saved');
+    } catch(e) { setSaveStatus('error'); }
+  }, 600);
+}
+function loadData() {
+  try {
+    const raw = localStorage.getItem('bar_inventory_v1');
+    if (raw) {
+      const d = JSON.parse(raw);
+      items = d.items || []; orders = d.orders || []; backorders = d.backorders || [];
+      nextId = d.nextId || (items.length ? Math.max(...items.map(i=>i.id))+1 : 1);
+      nextBoId = d.nextBoId || (backorders.length ? Math.max(...backorders.map(b=>b.id))+1 : 1);
+      customTypes = d.customTypes || [];
+    }
+  } catch(e) {}
+  render();
+}
+function setSaveStatus(s) {
+  const dot = document.getElementById('saveDot'), text = document.getElementById('saveText');
+  if (s === 'saving') { dot.className='save-dot saving'; text.textContent='Saving...'; }
+  else if (s === 'saved') { dot.className='save-dot'; text.textContent='Saved'; }
+  else { dot.className='save-dot'; dot.style.background='#a32d2d'; text.textContent='Error'; }
+}
+
+// ── TYPES ──
+function buildTypeSelect(id, cur) {
+  const sel = document.getElementById(id); if (!sel) return;
+  sel.innerHTML = '<option value="">— select type —</option>' + allTypes().map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+}
+function toggleCustomType(selId, inputId, rowId) {
+  const isOther = document.getElementById(selId).value === 'Other (type below)';
+  const row = document.getElementById(rowId); if (row) row.style.display = isOther ? '' : 'none';
+}
+function resolveType(selId, inputId) {
+  const val = document.getElementById(selId).value;
+  if (val === 'Other (type below)') {
+    const c = document.getElementById(inputId).value.trim();
+    if (c && !BUILTIN_TYPES.includes(c) && !customTypes.includes(c)) customTypes.push(c);
+    return c || 'Other';
+  }
+  return val;
+}
+
+// ── STATUS ──
+function status(item) { if (item.qty===0) return 'out'; if (item.qty<=item.par) return 'low'; return 'ok'; }
+function hasOpenBackorder(itemId) { return backorders.some(b=>b.itemId===itemId&&!b.resolved); }
+function statusBadge(item) {
+  const s=status(item), bo=hasOpenBackorder(item.id);
+  if (bo&&s!=='ok') return '<span class="badge badge-bo">Backordered</span>';
+  if (s==='out') return '<span class="badge badge-out">Out</span>';
+  if (s==='low') return '<span class="badge badge-low">Low</span>';
+  return '<span class="badge badge-ok">OK</span>';
+}
+
+function updateSummary() {
+  const total=items.length, low=items.filter(i=>status(i)==='low').length, out=items.filter(i=>status(i)==='out').length;
+  const openBO=backorders.filter(b=>!b.resolved).length;
+  const lastDel=orders.filter(o=>o.type==='delivery').slice().sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="metric"><div class="metric-label">Items</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Low / Out</div><div class="metric-value warn">${low+out}</div></div>
+    <div class="metric"><div class="metric-label">Backorders</div><div class="metric-value bo">${openBO}</div></div>
+  `;
+  document.getElementById('boCountBadge').textContent = openBO > 0 ? `(${openBO})` : '';
+}
+
+function refreshTypeFilter() {
+  const sel=document.getElementById('filterType'), cur=sel.value;
+  const used=[...new Set(items.map(i=>i.type).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All types</option>'+used.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
+}
+
+function render() {
+  const cat=document.getElementById('filterCat').value, type=document.getElementById('filterType').value, sf=document.getElementById('filterStatus').value;
+  let filtered=items.filter(i=>{ if(cat&&i.cat!==cat)return false; if(type&&i.type!==type)return false; if(sf==='low'&&status(i)==='ok')return false; return true; });
+  const list=document.getElementById('inventoryList');
+  if (!filtered.length) {
+    list.innerHTML=`<div class="empty">${items.length===0?'No items yet.<br>Tap <strong>Log delivery</strong> to start.':'No items match this filter.'}</div>`;
+    updateSummary(); refreshTypeFilter(); return;
+  }
+  list.innerHTML = filtered.map(i=>`
+    <div class="card item-row">
+      <div class="item-row-top">
+        <span class="item-name">${i.name}</span>
+        ${statusBadge(i)}
+      </div>
+      <div class="item-meta">
+        ${i.type?`<span class="badge badge-cat">${i.type}</span>`:''}
+        <span class="badge badge-cat">${i.cat}</span>
+        ${i.size?`<span style="font-size:12px;color:var(--text2)">${i.size}</span>`:''}
+      </div>
+      <div class="item-row-bottom">
+        <div class="item-details">
+          <span>Par: ${i.par}</span>
+          ${i.price!=null?`<span>${fmtPrice(i.price)}</span>`:''}
+          <span>${i.vendor||''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="qty-cell">
+            <button class="qty-btn" onclick="adjustQty(${i.id},-1)">−</button>
+            <span class="qty-num">${i.qty}</span>
+            <button class="qty-btn" onclick="adjustQty(${i.id},1)">+</button>
+          </div>
+          <button class="btn btn-icon btn-sm" onclick="openEdit(${i.id})">✏️</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  updateSummary(); refreshTypeFilter();
+}
+
+function adjustQty(id, delta) {
+  const item=items.find(i=>i.id===id); if (!item) return;
+  item.qty=Math.max(0,item.qty+delta); render(); if(currentTab==='reorder')renderReorder(); saveData();
+}
+
+// ── DELIVERY ──
+function openDelivery() {
+  delRows=[];
+  document.getElementById('del-vendor').value='';
+  document.getElementById('del-date').value=today();
+  ['new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-item-qty').value=1;
+  document.getElementById('newItemExtra').classList.remove('show');
+  document.getElementById('new-item-type-custom-row').style.display='none';
+  buildTypeSelect('new-item-type','');
+  renderDelRows();
+  document.getElementById('deliveryModal').classList.add('open');
+}
+function renderDelRows() {
+  const list=document.getElementById('delPendingList'), count=document.getElementById('delItemCount');
+  if (!delRows.length) { list.style.display='none'; count.textContent=''; return; }
+  list.style.display='';
+  list.innerHTML=delRows.map(r=>`
+    <div class="pending-row">
+      <div>
+        <div class="pending-row-name">${r.name}${r.isNew?' <span style="font-size:11px;color:var(--text2)">(new)</span>':''}</div>
+        <div class="pending-row-meta">${r.size||''} · qty ${r.qty} · ${fmtPrice(r.price)}</div>
+      </div>
+      <button class="pending-rm" onclick="removeDelRow(${r.tempId})">×</button>
+    </div>`).join('');
+  count.textContent=`${delRows.length} item${delRows.length!==1?'s':''} added`;
+}
+function addDelRow() {
+  const name=document.getElementById('new-item-name').value.trim(); if(!name){document.getElementById('new-item-name').focus();return;}
+  const size=document.getElementById('new-item-size').value.trim(), qty=parseInt(document.getElementById('new-item-qty').value)||1;
+  const pv=document.getElementById('new-item-price').value, price=pv!==''?parseFloat(pv):null;
+  const existing=items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+  const type=existing?existing.type:resolveType('new-item-type','new-item-type-custom');
+  const cat=existing?existing.cat:document.getElementById('new-item-cat').value;
+  const par=existing?existing.par:(parseInt(document.getElementById('new-item-par').value)||3);
+  const unit=existing?existing.unit:(document.getElementById('new-item-unit').value.trim()||'bottle');
+  delRows.push({tempId:delRowId++,name:existing?existing.name:name,size:size||(existing?existing.size:''),qty,price:price!=null?price:(existing?existing.price:null),isNew:!existing,type,cat,par,unit});
+  ['new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-item-qty').value=1;
+  document.getElementById('newItemExtra').classList.remove('show');
+  document.getElementById('new-item-type-custom-row').style.display='none';
+  renderDelRows(); document.getElementById('new-item-name').focus();
+}
+function removeDelRow(tempId){delRows=delRows.filter(r=>r.tempId!==tempId);renderDelRows();}
+function saveDelivery() {
+  const vendor=document.getElementById('del-vendor').value.trim(), date=document.getElementById('del-date').value;
+  if(!vendor){alert('Enter a vendor name.');return;} if(!delRows.length){alert('Add at least one item.');return;}
+  delRows.forEach(r=>{
+    let item=items.find(i=>i.name.toLowerCase()===r.name.toLowerCase());
+    if(!item){item={id:nextId++,name:r.name,type:r.type||'',cat:r.cat,vendor,size:r.size,unit:r.unit||'bottle',price:r.price,par:r.par,qty:r.qty};items.push(item);}
+    else{item.qty+=r.qty;item.vendor=vendor;if(r.size)item.size=r.size;if(r.price!=null)item.price=r.price;}
+    orders.push({date,itemId:item.id,qty:r.qty,vendor,cat:item.cat,price:r.price!=null?r.price:item.price,size:item.size,type:'delivery'});
+  });
+  closeModals(); render(); saveData();
+}
+
+// ── BULK BACKORDER ──
+function openBulkBackorder() {
+  boRows=[];
+  document.getElementById('bo-vendor').value='';
+  document.getElementById('bo-date').value=today();
+  document.getElementById('bo-order-notes').value='';
+  ['new-bo-name','new-bo-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-bo-qty').value=1;
+  renderBoRows();
+  document.getElementById('bulkBoModal').classList.add('open');
+}
+function renderBoRows() {
+  const list=document.getElementById('boPendingList'), count=document.getElementById('boItemCount');
+  if (!boRows.length){list.style.display='none';count.textContent='';return;}
+  list.style.display='';
+  list.innerHTML=boRows.map(r=>`
+    <div class="pending-row">
+      <div><div class="pending-row-name">${r.name}</div><div class="pending-row-meta">Qty short: ${r.qty}${r.notes?' · '+r.notes:''}</div></div>
+      <button class="pending-rm" onclick="removeBoRow(${r.tempId})">×</button>
+    </div>`).join('');
+  count.textContent=`${boRows.length} item${boRows.length!==1?'s':''} added`;
+}
+function addBoRow() {
+  const name=document.getElementById('new-bo-name').value.trim(); if(!name){document.getElementById('new-bo-name').focus();return;}
+  const qty=parseInt(document.getElementById('new-bo-qty').value)||1, notes=document.getElementById('new-bo-notes').value.trim();
+  boRows.push({tempId:boRowId++,name,qty,notes});
+  ['new-bo-name','new-bo-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-bo-qty').value=1;
+  renderBoRows(); document.getElementById('new-bo-name').focus();
+}
+function removeBoRow(tempId){boRows=boRows.filter(r=>r.tempId!==tempId);renderBoRows();}
+function saveBulkBackorder() {
+  const vendor=document.getElementById('bo-vendor').value.trim(), date=document.getElementById('bo-date').value, orderNotes=document.getElementById('bo-order-notes').value.trim();
+  if(!vendor){alert('Enter a vendor name.');return;} if(!boRows.length){alert('Add at least one item.');return;}
+  boRows.forEach(r=>{
+    const item=items.find(i=>i.name.toLowerCase()===r.name.toLowerCase());
+    const notes=[r.notes,orderNotes].filter(Boolean).join(' — ');
+    backorders.push({id:nextBoId++,itemId:item?item.id:-1,itemName:r.name,qty:r.qty,date,vendor,cat:item?item.cat:'Spirits',notes,resolved:false,resolvedDate:null,resolvedQty:null});
+  });
+  closeModals(); render(); saveData();
+}
+
+// ── EDIT ──
+function openEdit(id) {
+  const item=items.find(i=>i.id===id); if(!item)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-name').value=item.name;
+  document.getElementById('edit-size').value=item.size||'';
+  document.getElementById('edit-unit').value=item.unit||'';
+  document.getElementById('edit-price').value=item.price!=null?item.price:'';
+  document.getElementById('edit-par').value=item.par;
+  document.getElementById('edit-qty').value=item.qty;
+  document.getElementById('edit-vendor').value=item.vendor||'';
+  buildTypeSelect('edit-type',item.type||'');
+  document.getElementById('edit-cat').value=item.cat;
+  document.getElementById('edit-type-custom-row').style.display='none';
+  document.getElementById('edit-type-custom').value='';
+  document.getElementById('editModal').classList.add('open');
+}
+function saveEdit() {
+  const id=parseInt(document.getElementById('edit-id').value), item=items.find(i=>i.id===id); if(!item)return;
+  item.name=document.getElementById('edit-name').value.trim()||item.name;
+  item.type=resolveType('edit-type','edit-type-custom');
+  item.cat=document.getElementById('edit-cat').value;
+  item.size=document.getElementById('edit-size').value.trim();
+  item.unit=document.getElementById('edit-unit').value.trim()||'bottle';
+  const p=document.getElementById('edit-price').value; item.price=p!==''?parseFloat(p):null;
+  item.par=parseInt(document.getElementById('edit-par').value)||0;
+  item.qty=parseInt(document.getElementById('edit-qty').value)||0;
+  item.vendor=document.getElementById('edit-vendor').value.trim();
+  closeModals(); render(); saveData();
+}
+
+// ── BACKORDERS ──
+function renderBackorders() {
+  const showAll=document.getElementById('filterBOStatus').value==='all';
+  let filtered=(showAll?backorders:backorders.filter(b=>!b.resolved)).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const list=document.getElementById('backorderList');
+  if(!filtered.length){list.innerHTML='<div class="empty">No open backorders. 👍</div>';return;}
+  list.innerHTML=filtered.map(b=>{
+    const item=items.find(i=>i.id===b.itemId), name=item?item.name:b.itemName||'Unknown', unit=item?item.unit:'unit';
+    const action=b.resolved?`<span style="font-size:12px;color:var(--text2);font-style:italic">Received ${fmtDate(b.resolvedDate)}</span>`:`<button class="btn btn-sm" onclick="openResolveBackorder(${b.id})">✓ Mark received</button>`;
+    return`<div class="card item-row${b.resolved?'':' bo-row'}">
+      <div class="item-row-top"><span class="item-name">${name}</span><span class="badge badge-cat">${b.cat}</span></div>
+      <div class="item-details">
+        <span>Qty short: ${b.qty} ${unit}</span>
+        <span>${fmtDate(b.date)}</span>
+        <span>${b.vendor||''}</span>
+      </div>
+      ${b.notes?`<div style="font-size:12px;color:var(--text2);margin-top:2px">${b.notes}</div>`:''}
+      <div style="margin-top:8px">${action}</div>
+    </div>`;
+  }).join('');
+}
+function openResolveBackorder(id) {
+  const bo=backorders.find(b=>b.id===id);
+  document.getElementById('bor-id').value=id;
+  document.getElementById('bor-qty').value=bo?bo.qty:1;
+  document.getElementById('bor-date').value=today();
+  document.getElementById('boReceiveModal').classList.add('open');
+}
+function resolveBackorder() {
+  const id=parseInt(document.getElementById('bor-id').value), qty=parseInt(document.getElementById('bor-qty').value)||1, date=document.getElementById('bor-date').value;
+  const bo=backorders.find(b=>b.id===id); if(!bo)return;
+  bo.resolved=true;bo.resolvedDate=date;bo.resolvedQty=qty;
+  const item=items.find(i=>i.id===bo.itemId); if(item)item.qty+=qty;
+  orders.push({date,itemId:bo.itemId,qty,vendor:bo.vendor,cat:bo.cat,price:null,size:item?item.size:null,type:'received (BO)'});
+  closeModals(); render(); if(currentTab==='backorders')renderBackorders(); saveData();
+}
+
+// ── ORDERS ──
+function renderOrders() {
+  const vendor=document.getElementById('filterOrderVendor').value, cat=document.getElementById('filterOrderCat').value;
+  const all=[
+    ...orders.map(o=>({...o,_t:o.type})),
+    ...backorders.map(b=>({date:b.date,itemId:b.itemId,itemName:b.itemName,qty:b.qty,vendor:b.vendor,cat:b.cat,price:null,_t:'backorder'})),
+    ...backorders.filter(b=>b.resolved).map(b=>({date:b.resolvedDate,itemId:b.itemId,itemName:b.itemName,qty:b.resolvedQty,vendor:b.vendor,cat:b.cat,price:null,_t:'resolution'})),
+  ];
+  let filtered=all.filter(o=>{if(vendor&&o.vendor!==vendor)return false;if(cat&&o.cat!==cat)return false;return true;}).sort((a,b)=>b.date.localeCompare(a.date));
+  const body=document.getElementById('ordersBody');
+  if(!filtered.length){body.innerHTML='<div class="empty">No order history yet.</div>';return;}
+  body.innerHTML=filtered.map(o=>{
+    const item=items.find(i=>i.id===o.itemId), name=item?item.name:(o.itemName||'Unknown');
+    const typeLbl=o._t==='delivery'?'Delivery':o._t==='backorder'?'Backordered':'Received (BO)';
+    const typeCls=o._t==='delivery'?'badge-ok':o._t==='backorder'?'badge-bo':'badge-cat';
+    return`<div class="order-item${o._t==='backorder'?' bo-row':''}">
+      <div class="order-item-name">${name}</div>
+      <div class="order-item-meta">
+        <span>${fmtDate(o.date)}</span>
+        <span>${o.qty||'?'} ${item?item.unit:''}</span>
+        ${o.price!=null?`<span>${fmtPrice(o.price)}</span>`:''}
+        <span class="badge ${typeCls}">${typeLbl}</span>
+        <span>${o.vendor||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── REORDER ──
+function renderReorder() {
+  const needy=items.filter(i=>status(i)!=='ok'&&!hasOpenBackorder(i.id));
+  const list=document.getElementById('reorderList');
+  if(!needy.length){list.innerHTML='<div class="empty">All items above par. 🎉</div>';return;}
+  list.innerHTML=needy.map(i=>{
+    const need=Math.max(1,(i.par-i.qty)+Math.ceil(i.par*0.5));
+    return`<div class="card reorder-row">
+      <div class="reorder-name">${i.name}</div>
+      <div class="reorder-meta"><span>${i.size||i.unit}</span><span>Have: ${i.qty}</span><span>Par: ${i.par}</span><span>${i.vendor||''}</span></div>
+      <div class="reorder-need">Order +${need} ${i.unit}${i.price?' — est. '+fmtPrice(i.price*need):''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── TAB SWITCHING ──
+function switchTab(tab) {
+  currentTab=tab;
+  ['inventory','orders','backorders','reorder'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===tab?'':'none';});
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',['inventory','orders','backorders','reorder'][i]===tab);});
+  const bottomBar=document.getElementById('bottomBar');
+  bottomBar.style.display = tab==='inventory'?'flex':'none';
+  if(tab==='orders'){populateVendorFilter();renderOrders();}
+  if(tab==='backorders')renderBackorders();
+  if(tab==='reorder')renderReorder();
+}
+function populateVendorFilter() {
+  const vendors=[...new Set(orders.map(o=>o.vendor).filter(Boolean))];
+  document.getElementById('filterOrderVendor').innerHTML='<option value="">All vendors</option>'+vendors.map(v=>`<option>${v}</option>`).join('');
+}
+
+// ── AUTOCOMPLETE ──
+function showAc(id,matches){
+  const el=document.getElementById(id);
+  if(!matches.length){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML=matches.map(m=>`<div class="autocomplete-item" onmousedown="pickAc('${id}','${m.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${m}</div>`).join('');
+}
+function hideAc(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+function pickAc(acId,val){
+  if(acId==='vendor-ac'){document.getElementById('del-vendor').value=val;hideAc(acId);}
+  else if(acId==='bo-vendor-ac'){document.getElementById('bo-vendor').value=val;hideAc(acId);}
+  else if(acId==='item-ac'){
+    document.getElementById('new-item-name').value=val;
+    const ex=items.find(i=>i.name.toLowerCase()===val.toLowerCase());
+    if(ex){document.getElementById('new-item-size').value=ex.size||'';if(ex.price)document.getElementById('new-item-price').value=ex.price;}
+    document.getElementById('newItemExtra').classList.toggle('show',!ex);
+    if(!ex)buildTypeSelect('new-item-type','');
+    hideAc(acId); document.getElementById('new-item-qty').focus();
+  }
+  else if(acId==='bo-item-ac'){document.getElementById('new-bo-name').value=val;hideAc(acId);document.getElementById('new-bo-qty').focus();}
+}
+function acVendor(inputId,acId){const q=document.getElementById(inputId).value.toLowerCase();showAc(acId,q?allVendors().filter(v=>v.toLowerCase().includes(q)):[]);}
+function acItem(){
+  const q=document.getElementById('new-item-name').value.toLowerCase();
+  if(!q){hideAc('item-ac');return;}
+  showAc('item-ac',allItemNames().filter(n=>n.toLowerCase().includes(q)));
+  const exact=items.find(i=>i.name.toLowerCase()===q);
+  document.getElementById('newItemExtra').classList.toggle('show',!exact&&q.length>0);
+  if(!exact&&q.length>0)buildTypeSelect('new-item-type','');
+}
+function acBoItem(){const q=document.getElementById('new-bo-name').value.toLowerCase();showAc('bo-item-ac',q?allItemNames().filter(n=>n.toLowerCase().includes(q)):[]);}
+
+// ── UTILS ──
+function copyReorderList(){
+  const needy=items.filter(i=>status(i)!=='ok'&&!hasOpenBackorder(i.id));
+  if(!needy.length){alert('Nothing on the reorder list.');return;}
+  navigator.clipboard.writeText(needy.map(i=>`${i.name} (${i.size||i.unit}) — need +${Math.max(1,(i.par-i.qty)+Math.ceil(i.par*0.5))} [${i.vendor||''}]`).join('\n')).catch(()=>alert('Copy failed — try the export instead.'));
+}
+function exportCSV(){
+  const rows=[['Item','Type','Category','Size/Pack','Unit','On Hand','Par','Price','Vendor','Status','Open Backorder']];
+  items.forEach(i=>rows.push([i.name,i.type||'',i.cat,i.size||'',i.unit,i.qty,i.par,i.price!=null?i.price:'',i.vendor||'',status(i),hasOpenBackorder(i.id)?'Yes':'No']));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='bar_inventory.csv';a.click();
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModals();}));
+function closeModals(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));}
+
+loadData();
+</script>
+</body>
+</html>
