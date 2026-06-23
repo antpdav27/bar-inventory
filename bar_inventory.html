@@ -5857,7 +5857,7 @@ function saveData(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
     try{
-      localStorage.setItem('bar_inventory_v3',JSON.stringify({items,orders,backorders,nextId,nextBoId,customTypes,snapshots,nextSnapId,completedMigrations}));
+      localStorage.setItem('bar_inventory_v3',JSON.stringify({items,orders,backorders,nextId,nextBoId,customTypes,snapshots,nextSnapId,completedMigrations:[...completedMigrations]}));
       setSaveStatus('saved');
     }catch(e){setSaveStatus('error');}
   },600);
@@ -5873,7 +5873,7 @@ function loadData(){
       customTypes=d.customTypes||[];
       snapshots=d.snapshots||[];
       nextSnapId=d.nextSnapId||(snapshots.length?Math.max(...snapshots.map(s=>s.id))+1:1);
-      completedMigrations=new Set(d.completedMigrations||[]);
+      try{completedMigrations=new Set(Array.isArray(d.completedMigrations)?d.completedMigrations:[]);}catch(e){completedMigrations=new Set();}
       // Migration: bring in any catalog items added since this data was saved
       // (e.g. wine/beer/beverages/ingredients/supplies added in a later version),
       // without touching existing items' saved qty/price/edits.
@@ -5912,7 +5912,8 @@ function loadData(){
         migrated=true;
       }
       // One-time migration: apply shelf order from June 2026 printed inventory sheet
-      if(!completedMigrations.has('shelf-order-june-2026')){
+      // Use direct sortOrder check instead of completedMigrations (guards against Set serialization bug)
+      if(!items.some(i=>i.id===83&&i.sortOrder===10)){
         const ORDER_MAP={83:10,82:20,93:30,76:40,89:50,86:60,85:70,95:80,87:90,88:100,90:110,91:120,92:130,112:140,113:150,114:160,115:170,116:180,118:190,120:200,94:210,77:220,78:230,79:240,80:250,81:260,97:270,98:280,99:290,100:300,101:310,102:320,271:330,104:340,105:350,106:360,107:370,108:380,109:390,110:400,111:410,57:420,58:430,59:440,60:450,61:460,62:470,63:480,64:490,65:500,66:510,67:520,68:530,69:540,70:550,71:560,75:570,72:580,74:590,73:600,53:610,54:620,46:630,41:640,42:650,43:660,44:670,45:680,25:690,17:700,18:710,19:720,26:730,27:740,40:750,28:760,29:770,30:780,32:790,36:800,33:810,34:820,35:830,31:840,37:850,38:860,49:870,50:880,1:890,4:900,3:910,2:920,5:930,8:940,7:950,6:960,9:970,10:980,11:990,13:1000,15:1010,12:1020,51:1030,52:1040,39:1050,22:1060,21:1070,24:1080,134:1090,135:1100,133:1110,131:1120,139:1130,142:1140,269:1150,147:1160,16:1170,270:1180,146:1190,140:1200,132:1210,141:1220,144:1230,121:1240,119:1250,145:1260,149:1270,154:1280,152:1290,153:1300,148:1310,130:1320,143:1330,126:1340,138:1350,122:1360,127:1370,123:1380,222:1390,226:1400,221:1410,223:1420,229:1430,220:1440,224:1450,228:1460,219:1470,225:1480,227:1490,155:1500,156:1510,157:1520,158:1530,159:1540,187:1550,188:1560,161:1570,184:1580,185:1590,186:1600,189:1610,190:1620,191:1630,192:1640,193:1650,194:1660,195:1670,196:1680,20:1690,56:1700,151:1710,150:1720,129:1730,268:1740,136:1750,137:1760,124:1770,125:1780,48:1790};
         let nextFallback=2000;
         const usedFallbacks=new Set(Object.values(ORDER_MAP));
