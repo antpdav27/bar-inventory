@@ -6484,6 +6484,15 @@ function deleteSnapshot(id){
     saveData();renderCounts();
   });
 }
+function restoreCount(id){
+  const snap=snapshots.find(s=>s.id===id);
+  if(!snap)return;
+  customConfirm(`Restore all quantities to the counts from ${fmtDate(snap.date)}? This will overwrite your current quantities.`,()=>{
+    items.forEach(i=>{if(i.id in snap.counts)i.qty=snap.counts[i.id];});
+    saveData();render();
+    navTo('inventory');
+  });
+}
 function computeUsage(fromSnap,toSnap){
   const rows=[];
   items.forEach(item=>{
@@ -6508,9 +6517,12 @@ function renderCounts(){
     return;
   }
   listEl.innerHTML=`<div class="group-card"><div class="group-header">Saved counts</div>`+
-    sorted.map(s=>`<div class="order-item" style="display:flex;align-items:center;justify-content:space-between">
+    sorted.map(s=>`<div class="order-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <div><span class="order-item-name" style="margin-bottom:0">${fmtDate(s.date)}</span> <span style="color:var(--text2);font-size:12px">— ${Object.keys(s.counts).length} items</span></div>
-      <button class="btn btn-sm btn-icon" onclick="deleteSnapshot(${s.id})" title="Delete this count">🗑️</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-sm" onclick="restoreCount(${s.id})" title="Restore quantities from this count">↩ Restore</button>
+        <button class="btn btn-sm btn-icon" onclick="deleteSnapshot(${s.id})" title="Delete this count">🗑️</button>
+      </div>
     </div>`).join('')+`</div>`;
 
   if(sorted.length<2){
