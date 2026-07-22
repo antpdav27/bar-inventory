@@ -130,6 +130,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .history-meta{font-size:11px;color:var(--text2);display:flex;gap:8px;flex-wrap:wrap;}
 .history-price{font-size:13px;font-weight:600;color:var(--text2);flex-shrink:0;}
 .history-empty{padding:16px 12px;text-align:center;color:var(--text3);font-size:12px;}
+.scope-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--blue-bg);color:var(--blue-text);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;font-weight:600;margin-bottom:10px;}
+.scope-banner button{border:none;background:none;color:inherit;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+/* INVENTORY MODE TABS */
+.mode-tabs{display:flex;gap:6px;margin-bottom:8px;}
+.mode-tab{flex:1;padding:8px 6px;text-align:center;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.mode-tab:active{opacity:.6;}
+.mode-tab.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.qty-cell-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.stock-diff{font-size:11px;font-weight:600;}
+.stock-diff.diff-pos{color:var(--green-text);}
+.stock-diff.diff-neg{color:var(--red-text);}
+.reorder-need-cell{flex-shrink:0;}
+.reorder-need-pill{display:inline-block;padding:5px 10px;border-radius:100px;font-size:12px;font-weight:700;background:var(--yellow-bg);color:var(--yellow-text);}
+.at-par-pill{display:inline-block;padding:5px 10px;border-radius:100px;font-size:12px;font-weight:700;background:var(--green-bg);color:var(--green-text);}
 .empty{padding:40px 20px;text-align:center;color:var(--text2);font-size:14px;}
 /* REORDER LIST */
 .reorder-group-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:8px;}
@@ -208,6 +222,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <label class="toggle"><input type="checkbox" id="reorderModeToggle" onchange="toggleReorderMode()"><span class="toggle-slider"></span></label>
       </label>
     </div>
+    <div class="mode-tabs" id="invModeTabs">
+      <button class="mode-tab" data-mode="count" onclick="setInvMode('count')">🔢 Count</button>
+      <button class="mode-tab" data-mode="stock" onclick="setInvMode('stock')">👁️ Stock</button>
+      <button class="mode-tab" data-mode="reorder" onclick="setInvMode('reorder')">🛒 Reorder</button>
+    </div>
+    <p class="section-note" id="invModeNote" style="display:none"></p>
     <div id="inventoryList"><div class="group-card" data-group="Spirits — Vodka"><div class="group-header">Spirits — Vodka</div><div class="item-row clickable" data-id="1" draggable="false" onclick="openEdit(1)">
         <div class="item-row-top">
           <span class="drag-handle" title="Drag to reorder">⠿</span>
@@ -5495,6 +5515,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <!-- REORDER TAB -->
   <div id="tab-reorder" style="display:none">
     <p class="section-note">At or below reorder point. Grouped by vendor. Open backorders excluded.</p>
+    <div id="reorderScopeBanner" style="display:none"></div>
     <div id="reorderList"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-sm" onclick="copyReorderList()">📋 Copy list</button>
@@ -5542,6 +5563,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="form-row"><label>Type</label><select id="filterType" onchange="render()"><option value="">All types</option><option>Ale</option><option>Bar supply</option><option>Bitters</option><option>Bourbon</option><option>Brandy</option><option>Champagne / Sparkling</option><option>Cleaning supply</option><option>Cognac</option><option>Dairy</option><option>Dry Goods</option><option>Energy Drink</option><option>Garnish</option><option>Gin</option><option>IPA</option><option>Juice</option><option>Juice/Puree</option><option>Lager</option><option>Liqueur</option><option>Mezcal</option><option>Mixer</option><option>Non-Alcoholic</option><option>Paper goods</option><option>Produce</option><option>Red Wine</option><option>Rosé</option><option>Rum</option><option>Rye</option><option>Scotch</option><option>Seltzer</option><option>Soda</option><option>Stout / Porter</option><option>Syrup</option><option>Tequila</option><option>Vermouth</option><option>Vodka</option><option>Water</option><option>Wheat / Belgian</option><option>Whiskey</option><option>White Wine</option></select></div>
     <div class="form-row"><label>Location</label><select id="filterLoc" onchange="render()"><option value="">All locations</option><option value="display">Display</option><option value="cage">Cage</option><option value="storage">Back stock</option><option value="fridge">Fridge</option><option value="cabinet">Cabinet</option><option value="ice-room">Ice room</option><option value="wine-room">Wine room</option></select></div>
     <div class="form-row"><label>Status</label><select id="filterStatus" onchange="render()"><option value="">All status</option><option value="low">Low / Out only</option><option value="archived">Discontinued</option></select></div>
+    <div class="form-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+      <label>Reorder page filter</label>
+      <p class="section-note" id="reorderScopeStatus" style="margin:0 0 8px"></p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" style="flex:1" onclick="saveReorderScope()">💾 Use this filter for Reorder</button>
+        <button class="btn btn-sm" style="flex:1" onclick="clearReorderScope()">✕ Clear</button>
+      </div>
+    </div>
     <div class="form-actions">
       <button class="btn" style="flex:1" onclick="clearFilters()">Clear filters</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeModals()">Done</button>
@@ -5859,6 +5888,8 @@ let items=[],orders=[],backorders=[];
 let nextId=1,nextBoId=1,nextSnapId=1,currentTab='inventory';
 let completedMigrations=new Set();
 let snapshots=[];
+let reorderScope=null;
+let invMode='count';
 let delRows=[],delRowId=0,boRows=[],boRowId=0,saveTimer=null;
 let reorderMode=false,dragSrcId=null;
 
@@ -5918,7 +5949,7 @@ function saveData(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
     try{
-      localStorage.setItem('bar_inventory_v3',JSON.stringify({items,orders,backorders,nextId,nextBoId,customTypes,snapshots,nextSnapId,completedMigrations:[...completedMigrations]}));
+      localStorage.setItem('bar_inventory_v3',JSON.stringify({items,orders,backorders,nextId,nextBoId,customTypes,snapshots,nextSnapId,completedMigrations:[...completedMigrations],reorderScope,invMode}));
       setSaveStatus('saved');
     }catch(e){setSaveStatus('error');}
   },600);
@@ -5935,6 +5966,8 @@ function loadData(){
       snapshots=d.snapshots||[];
       nextSnapId=d.nextSnapId||(snapshots.length?Math.max(...snapshots.map(s=>s.id))+1:1);
       try{completedMigrations=new Set(Array.isArray(d.completedMigrations)?d.completedMigrations:[]);}catch(e){completedMigrations=new Set();}
+      reorderScope=d.reorderScope||null;
+      invMode=d.invMode||'count';
       // Migration: bring in any catalog items added since this data was saved
       // (e.g. wine/beer/beverages/ingredients/supplies added in a later version),
       // without touching existing items' saved qty/price/edits.
@@ -6161,6 +6194,7 @@ function matchesSearch(item,q){
 
 function render(){
   updateFilterBadge();
+  updateModeUI();
   const cat=document.getElementById('filterCat').value,
         type=document.getElementById('filterType').value,
         loc=document.getElementById('filterLoc').value,
@@ -6213,11 +6247,7 @@ function render(){
             <span>${i.vendor||''}</span>
             <span class="count-date">${relTime(i.lastCounted)}</span>
           </div>
-          <div class="qty-cell" onclick="event.stopPropagation()">
-            <button class="qty-btn" onclick="adjustQty(${i.id},-1)">−</button>
-            <input type="number" class="qty-input" inputmode="decimal" step="0.1" min="0" value="${i.qty}" onchange="setQty(${i.id},this.value)">
-            <button class="qty-btn" onclick="adjustQty(${i.id},1)">+</button>
-          </div>
+          ${qtyCellHtml(i)}
         </div>
       </div>`;
     });
@@ -6338,6 +6368,72 @@ function setQty(id,val){
   if(v!==item.qty)item.lastCounted=today();
   item.qty=v;
   render();if(currentTab==='reorder')renderReorder();saveData();
+}
+
+// ── INVENTORY MODES: Count / Stock / Reorder ──
+function round1(n){return Math.round(n*10)/10;}
+function setInvMode(mode){
+  invMode=mode;
+  updateModeUI();
+  render();
+  saveData();
+}
+function updateModeUI(){
+  const tabs=document.getElementById('invModeTabs');if(!tabs)return;
+  tabs.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active',b.dataset.mode===invMode));
+  const note=document.getElementById('invModeNote');
+  const notes={
+    count:'',
+    stock:'Shelf check — enter what you see. This does not change your saved on-hand quantities. <a href="#" onclick="clearStockCounts();return false;" style="color:inherit;text-decoration:underline">Clear shelf counts</a>',
+    reorder:'Read-only — shows how many of each item you\'d need to order to hit par, based on your current on-hand quantities.',
+  };
+  if(notes[invMode]){note.innerHTML=notes[invMode];note.style.display='';}
+  else{note.style.display='none';}
+}
+function adjustStockQty(id,delta){
+  const item=items.find(i=>i.id===id);if(!item)return;
+  const base=(item.stockQty!=null&&item.stockQty!=='')?parseFloat(item.stockQty):item.qty;
+  item.stockQty=Math.max(0,round1(base+delta));
+  render();saveData();
+}
+function setStockQty(id,val){
+  const item=items.find(i=>i.id===id);if(!item)return;
+  if(val===''){item.stockQty=null;render();saveData();return;}
+  let v=parseFloat(val);
+  if(isNaN(v)||v<0)v=0;
+  item.stockQty=round1(v);
+  render();saveData();
+}
+function clearStockCounts(){
+  customConfirm('Clear all shelf-check counts entered in Stock mode? Your saved on-hand quantities are not affected.',()=>{
+    items.forEach(i=>{delete i.stockQty;});
+    render();saveData();
+  });
+}
+function qtyCellHtml(i){
+  if(invMode==='stock'){
+    const sq=i.stockQty;
+    const hasSq=sq!=null&&sq!=='';
+    const diff=hasSq?round1(parseFloat(sq)-i.qty):null;
+    const diffHtml=(diff!=null&&diff!==0)?`<span class="stock-diff ${diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${diff} vs system (${i.qty})</span>`:(hasSq?`<span class="stock-diff">matches system</span>`:'');
+    return`<div class="qty-cell-wrap" onclick="event.stopPropagation()">
+      <div class="qty-cell">
+        <button class="qty-btn" onclick="adjustStockQty(${i.id},-1)">−</button>
+        <input type="number" class="qty-input" inputmode="decimal" step="0.1" min="0" placeholder="${i.qty}" value="${hasSq?sq:''}" onchange="setStockQty(${i.id},this.value)">
+        <button class="qty-btn" onclick="adjustStockQty(${i.id},1)">+</button>
+      </div>
+      ${diffHtml}
+    </div>`;
+  }
+  if(invMode==='reorder'){
+    const need=round1(Math.max(0,i.par-i.qty));
+    return`<div class="reorder-need-cell">${need>0?`<span class="reorder-need-pill">Order +${need} ${i.unit}</span>`:`<span class="at-par-pill">At par ✓</span>`}</div>`;
+  }
+  return`<div class="qty-cell" onclick="event.stopPropagation()">
+    <button class="qty-btn" onclick="adjustQty(${i.id},-1)">−</button>
+    <input type="number" class="qty-input" inputmode="decimal" step="0.1" min="0" value="${i.qty}" onchange="setQty(${i.id},this.value)">
+    <button class="qty-btn" onclick="adjustQty(${i.id},1)">+</button>
+  </div>`;
 }
 
 // ── DELIVERY ──
@@ -6646,7 +6742,22 @@ function renderOrders(){
 
 // ── REORDER LIST ──
 function renderReorder(){
-  const needy=sortedItems().filter(i=>needsReorder(i)&&!hasOpenBackorder(i.id));
+  const banner=document.getElementById('reorderScopeBanner');
+  if(reorderScope){
+    banner.style.display='';
+    banner.innerHTML=`<span>🔎 Scoped to: ${describeScope(reorderScope)}</span><button onclick="clearReorderScope();renderReorder();">Show all ✕</button>`;
+  } else {
+    banner.style.display='none';
+  }
+  const needy=sortedItems().filter(i=>{
+    if(!needsReorder(i)||hasOpenBackorder(i.id))return false;
+    if(reorderScope){
+      if(reorderScope.cat&&i.cat!==reorderScope.cat)return false;
+      if(reorderScope.type&&i.type!==reorderScope.type)return false;
+      if(reorderScope.loc&&i.location!==reorderScope.loc)return false;
+    }
+    return true;
+  });
   const list=document.getElementById('reorderList');
   if(!needy.length){list.innerHTML='<div class="empty">All items above reorder point. 🎉</div>';return;}
   const byVendor={};
@@ -6841,10 +6952,35 @@ function createNewItem(name){
 }
 
 // ── FILTERS PANEL ──
-function openFilters(){document.getElementById('filtersModal').classList.add('open');}
+function openFilters(){updateReorderScopeStatus();document.getElementById('filtersModal').classList.add('open');}
 function clearFilters(){
   ['filterCat','filterType','filterLoc','filterStatus'].forEach(id=>document.getElementById(id).value='');
   render();
+}
+function describeScope(s){
+  if(!s)return'';
+  return[s.cat,s.type,s.loc].filter(Boolean).join(' · ')||'All items';
+}
+function updateReorderScopeStatus(){
+  const el=document.getElementById('reorderScopeStatus');if(!el)return;
+  el.textContent=reorderScope?`Reorder page is currently scoped to: ${describeScope(reorderScope)}`:'Reorder page currently shows all items below par.';
+}
+function saveReorderScope(){
+  reorderScope={
+    cat:document.getElementById('filterCat').value,
+    type:document.getElementById('filterType').value,
+    loc:document.getElementById('filterLoc').value,
+  };
+  if(!reorderScope.cat&&!reorderScope.type&&!reorderScope.loc)reorderScope=null;
+  updateReorderScopeStatus();
+  saveData();
+  if(currentTab==='reorder')renderReorder();
+}
+function clearReorderScope(){
+  reorderScope=null;
+  updateReorderScopeStatus();
+  saveData();
+  if(currentTab==='reorder')renderReorder();
 }
 function updateFilterBadge(){
   const n=['filterCat','filterType','filterLoc','filterStatus'].filter(id=>document.getElementById(id).value).length;
