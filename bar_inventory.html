@@ -122,6 +122,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .order-item-meta{font-size:12px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;}
 .order-item.bo-row{background:var(--yellow-bg);}
 .section-note{font-size:12px;color:var(--text2);margin-bottom:10px;}
+.history-list{max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);}
+.history-row{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.history-row:last-child{border-bottom:none;}
+.history-row-left{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.history-date{font-weight:600;font-size:13px;}
+.history-meta{font-size:11px;color:var(--text2);display:flex;gap:8px;flex-wrap:wrap;}
+.history-price{font-size:13px;font-weight:600;color:var(--text2);flex-shrink:0;}
+.history-empty{padding:16px 12px;text-align:center;color:var(--text3);font-size:12px;}
 .empty{padding:40px 20px;text-align:center;color:var(--text2);font-size:14px;}
 /* REORDER LIST */
 .reorder-group-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:8px;}
@@ -5455,6 +5463,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <!-- PRICES TAB -->
   <div id="tab-prices" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button id="priceViewBtn-history" class="btn btn-primary" style="flex:1;font-size:13px" onclick="setPriceView('history')">💰 Price History</button>
+      <button id="priceViewBtn-missing" class="btn" style="flex:1;font-size:13px" onclick="setPriceView('missing')">⚠️ Missing Prices</button>
+    </div>
     <div class="controls" style="margin-bottom:8px">
       <input type="text" id="priceSearch" placeholder="Search items..." oninput="renderPrices()" style="flex:1;min-width:120px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px">
       <select id="priceCat" onchange="renderPrices()" style="padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:14px"><option value="">All categories</option><option>Spirits</option><option>Beer</option><option>Wine</option><option>Beverages</option><option>Ingredients</option><option>Supplies</option></select>
@@ -5564,20 +5576,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <div class="autocomplete-list" id="item-ac" style="display:none"></div>
           </div>
         </div>
-        <div><label id="qty-label">Qty</label><input type="number" id="new-item-qty" min="1" value="1" oninput="syncQtyFromBottles()"></div>
+        <div><label id="qty-label">Qty</label><input type="number" id="new-item-qty" min="1" value="1" oninput="syncQtyFromBottles();calcUnitPrice()"></div>
       </div>
-      <div class="add-item-grid2">
-        <div><label>Price ($)</label><input type="number" id="new-item-price" min="0" step="0.01" placeholder="0.00"></div>
-        <div><label>Size/Pack</label><input type="text" id="new-item-size" placeholder="750 mL"></div>
-        <div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+        <div><label>Unit size</label><input type="text" id="new-item-size" placeholder="750 mL, 12 oz..."></div>
+        <div><label>Unit</label><input type="text" id="new-item-unit-del" placeholder="bottle, can..."></div>
       </div>
       <div class="new-item-fields" id="newItemExtra">
         <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:500">New item — set details:</div>
         <div class="nif-grid">
           <div><label>Type</label><select id="new-item-type" onchange="toggleCustomType(&#39;new-item-type&#39;,&#39;new-item-type-custom&#39;,&#39;new-item-type-custom-row&#39;)"></select></div>
-          <div><label>Category</label><select id="new-item-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Beverages</option><option>Ingredients</option><option>Supplies</option></select></div>
+          <div><label>Category</label><select id="new-item-cat" onchange="buildTypeSelect('new-item-type','',this.value)"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Beverages</option><option>Ingredients</option><option>Supplies</option></select></div>
           <div><label>Par level</label><input type="number" id="new-item-par" value="2" min="0" step="0.5"></div>
-          <div><label>Unit</label><input type="text" id="new-item-unit" placeholder="bottle, case..."></div>
         </div>
         <div class="nif-grid">
           <div><label>Location</label><select id="new-item-loc"><option value="display">Display</option><option value="cage">Cage</option><option value="storage">Back stock</option><option value="fridge">Fridge</option><option value="cabinet">Cabinet</option><option value="ice-room">Ice room</option><option value="wine-room">Wine room</option></select></div>
@@ -5598,7 +5608,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <span id="case-qty-label" style="font-size:13px;font-weight:600;color:var(--text)">—</span>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="addDelRow()">+ Add to delivery</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0">
+        <div>
+          <label>Total price ($)</label>
+          <input type="number" id="new-item-price" min="0" step="0.01" placeholder="0.00" oninput="calcUnitPrice()">
+        </div>
+        <div id="unit-price-row" style="display:none">
+          <label style="color:var(--text2)">Unit price</label>
+          <div id="unit-price-display" style="font-size:15px;font-weight:600;padding:9px 0"></div>
+        </div>
+      </div>
+      <div id="price-hint-row" style="display:none;margin-bottom:4px">
+        <span id="price-hint" style="font-size:11px;color:var(--text2)"></span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="addDelRow()">+ Add to delivery</button>
     </div>
     <div class="form-actions">
       <button class="btn" style="flex:1" onclick="closeModals()">Cancel</button>
@@ -5655,9 +5678,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <p class="modal-sub">Fix any details. Won't change past order history.</p>
     <input type="hidden" id="edit-id">
     <div class="form-row"><label>Item name</label><input type="text" id="edit-name"></div>
+    <div class="form-row">
+      <label>Order history</label>
+      <div class="history-list" id="edit-history-list"></div>
+    </div>
     <div class="form-row-2">
+      <div><label>Category</label><select id="edit-cat" onchange="onEditCatChange()"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Beverages</option><option>Ingredients</option><option>Supplies</option></select></div>
       <div><label>Type</label><select id="edit-type" onchange="toggleCustomType(&#39;edit-type&#39;,&#39;edit-type-custom&#39;,&#39;edit-type-custom-row&#39;)"></select></div>
-      <div><label>Category</label><select id="edit-cat"><option>Spirits</option><option>Beer</option><option>Wine</option><option>Beverages</option><option>Ingredients</option><option>Supplies</option></select></div>
     </div>
     <div class="form-row" id="edit-type-custom-row" style="display:none"><label>Custom type</label><input type="text" id="edit-type-custom"></div>
     <div class="form-row-2">
@@ -5835,7 +5862,15 @@ let snapshots=[];
 let delRows=[],delRowId=0,boRows=[],boRowId=0,saveTimer=null;
 let reorderMode=false,dragSrcId=null;
 
-const BUILTIN_TYPES=['Vodka','Tequila','Mezcal','Whiskey','Bourbon','Scotch','Rum','Gin','Brandy','Cognac','Rye','Vermouth','Liqueur','Lager','IPA','Ale','Stout / Porter','Wheat / Belgian','Non-Alcoholic','Seltzer','Cider','Red Wine','White Wine','Rosé','Champagne / Sparkling','Soda','Mixer','Energy Drink','Juice','Water','Bitters','Syrup','Garnish','Produce','Dairy','Juice/Puree','Dry Goods','Bar supply','Cleaning supply','Paper goods'];
+const CAT_TYPES={
+  Spirits:['Vodka','Tequila','Mezcal','Rum','Gin','Vermouth','Liqueur',{group:'Whiskey',types:['Whiskey','Bourbon','Scotch','Rye']},{group:'Brandy / Cognac',types:['Brandy','Cognac']}],
+  Beer:['Bottle','Keg'],
+  Wine:['Red Wine','White Wine','Rosé','Champagne / Sparkling'],
+  Beverages:['Soda','Energy Drink','Juice','Water','Mixer','Non-Alcoholic'],
+  Ingredients:['Syrup / Puree','Bitters','Garnish','Produce','Dairy','Dry Goods'],
+  Supplies:['Bar supply','Cleaning supply','Paper goods'],
+};
+const BUILTIN_TYPES=[...new Set(Object.values(CAT_TYPES).flat().flatMap(e=>e.group?e.types:[e]))];
 let customTypes=[];
 function allTypes(){return[...new Set([...BUILTIN_TYPES,...customTypes])];}
 
@@ -5958,6 +5993,22 @@ function loadData(){
         completedMigrations.add('case-size-june-2026');
         migrated=true;
       }
+      // Migration: total price model (july 2026)
+      if(!completedMigrations.has('total-price-july-2026')){
+        orders.forEach(o=>{if(o.type==='delivery'&&o.price!=null&&o.unitPrice==null)o.unitPrice=o.price;});
+        completedMigrations.add('total-price-july-2026');
+        migrated=true;
+      }
+      // Migration: type reorganization (july 2026)
+      if(!completedMigrations.has('type-reorganize-july-2026')){
+        items.forEach(i=>{
+          if(i.cat==='Beer'&&!['Bottle','Keg'].includes(i.type))i.type='Bottle';
+          if(i.cat==='Spirits'&&i.type==='Bitters')i.cat='Ingredients';
+          if(i.type==='Juice/Puree'||i.type==='Syrup')i.type='Syrup / Puree';
+        });
+        completedMigrations.add('type-reorganize-july-2026');
+        migrated=true;
+      }
       // Migration: wine + beverage case sizes (june 2026)
       if(!completedMigrations.has('case-size-wine-bev-june-2026')){
         items.forEach(i=>{if(i.cat==='Wine'&&!i.caseSize)i.caseSize=12;});
@@ -5982,10 +6033,17 @@ function loadData(){
     } else {
       items=SEED_ITEMS.map(i=>({...i}));
       nextId=SEED_ITEMS.length+1;nextBoId=1;
-      completedMigrations=new Set(['archive-wine-june-2026','new-wine-service-june-2026','shelf-order-june-2026','case-size-june-2026','case-size-wine-bev-june-2026']);
+      completedMigrations=new Set(['archive-wine-june-2026','new-wine-service-june-2026','shelf-order-june-2026','case-size-june-2026','case-size-wine-bev-june-2026','total-price-july-2026']);
       // Apply wine/bev case sizes for fresh install
       items.forEach(i=>{if(i.cat==='Wine')i.caseSize=12;});
       {const BS={197:35,198:35,199:35,203:12,204:12,205:24,209:24,210:12};items.forEach(i=>{if(BS[i.id])i.caseSize=BS[i.id];});[206,207,208].forEach(id=>{const it=items.find(x=>x.id===id);if(it)it.individual=true;});}
+      // type reorganize for fresh install
+      items.forEach(i=>{
+        if(i.cat==='Beer'&&!['Bottle','Keg'].includes(i.type))i.type='Bottle';
+        if(i.cat==='Spirits'&&i.type==='Bitters')i.cat='Ingredients';
+        if(i.type==='Juice/Puree'||i.type==='Syrup')i.type='Syrup / Puree';
+      });
+      completedMigrations.add('type-reorganize-july-2026');
       // Apply shelf order for fresh installs
       const FRESH_ORDER={83:10,82:20,93:30,76:40,89:50,86:60,85:70,95:80,87:90,88:100,90:110,91:120,92:130,112:140,113:150,114:160,115:170,116:180,118:190,120:200,94:210,77:220,78:230,79:240,80:250,81:260,97:270,98:280,99:290,100:300,101:310,102:320,271:330,104:340,105:350,106:360,107:370,108:380,109:390,110:400,111:410,57:420,58:430,59:440,60:450,61:460,62:470,63:480,64:490,65:500,66:510,67:520,68:530,69:540,70:550,71:560,75:570,72:580,74:590,73:600,53:610,54:620,46:630,41:640,42:650,43:660,44:670,45:680,25:690,17:700,18:710,19:720,26:730,27:740,40:750,28:760,29:770,30:780,32:790,36:800,33:810,34:820,35:830,31:840,37:850,38:860,49:870,50:880,1:890,4:900,3:910,2:920,5:930,8:940,7:950,6:960,9:970,10:980,11:990,13:1000,15:1010,12:1020,51:1030,52:1040,39:1050,22:1060,21:1070,24:1080,134:1090,135:1100,133:1110,131:1120,139:1130,142:1140,269:1150,147:1160,16:1170,270:1180,146:1190,140:1200,132:1210,141:1220,144:1230,121:1240,119:1250,145:1260,149:1270,154:1280,152:1290,153:1300,148:1310,130:1320,143:1330,126:1340,138:1350,122:1360,127:1370,123:1380,222:1390,226:1400,221:1410,223:1420,229:1430,220:1440,224:1450,228:1460,219:1470,225:1480,227:1490,155:1500,156:1510,157:1520,158:1530,159:1540,187:1550,188:1560,161:1570,184:1580,185:1590,186:1600,189:1610,190:1620,191:1630,192:1640,193:1650,194:1660,195:1670,196:1680,20:1690,56:1700,151:1710,150:1720,129:1730,268:1740,136:1750,137:1760,124:1770,125:1780,48:1790};
       let freshFallback=2000;items.forEach(i=>{if(FRESH_ORDER[i.id]!==undefined){i.sortOrder=FRESH_ORDER[i.id];}else{i.sortOrder=freshFallback;freshFallback+=10;}});
@@ -6002,10 +6060,32 @@ function setSaveStatus(s){
 }
 
 // ── TYPES ──
-function buildTypeSelect(id,cur){
+function flattenCatTypes(cat){return(CAT_TYPES[cat]||[]).flatMap(e=>e.group?e.types:[e]);}
+function buildTypeSelect(id,cur,cat){
   const sel=document.getElementById(id);if(!sel)return;
-  const types=[...allTypes(),'Other (type below)'];
-  sel.innerHTML='<option value="">— select type —</option>'+types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+  let html='<option value="">— select type —</option>';
+  const catDef=cat?CAT_TYPES[cat]:null;
+  if(catDef){
+    const catFlat=flattenCatTypes(cat);
+    catDef.forEach(e=>{
+      if(e.group){
+        html+=`<optgroup label="${e.group}">${e.types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('')}</optgroup>`;
+      }else{
+        html+=`<option value="${e}"${e===cur?' selected':''}>${e}</option>`;
+      }
+    });
+    customTypes.filter(t=>!catFlat.includes(t)).forEach(t=>{html+=`<option value="${t}"${t===cur?' selected':''}>${t}</option>`;});
+    if(cur&&!catFlat.includes(cur)&&!customTypes.includes(cur))html+=`<option value="${cur}" selected>${cur} (legacy)</option>`;
+  }else{
+    allTypes().forEach(t=>{html+=`<option value="${t}"${t===cur?' selected':''}>${t}</option>`;});
+  }
+  html+='<option value="Other (type below)">Other (type below)</option>';
+  sel.innerHTML=html;
+}
+function onEditCatChange(){
+  const cat=document.getElementById('edit-cat').value;
+  const cur=document.getElementById('edit-type').value;
+  buildTypeSelect('edit-type',flattenCatTypes(cat).includes(cur)?cur:'',cat);
 }
 function toggleCustomType(selId,inputId,rowId){
   const isOther=document.getElementById(selId).value==='Other (type below)';
@@ -6129,7 +6209,7 @@ function render(){
         <div class="item-row-bottom">
           <div class="item-details">
             <span>Par: ${i.par} · reorder ≤${i.reorderAt}</span>
-            ${i.price!=null?`<span>${fmtPrice(i.price)}</span>`:''}
+            ${i.price!=null?`<span>${fmtPrice(i.price)}/${i.unit||'unit'}${i.caseSize&&!i.individual?' · '+fmtPrice(i.price*i.caseSize)+'/case ('+i.caseSize+')':''}</span>`:''}
             <span>${i.vendor||''}</span>
             <span class="count-date">${relTime(i.lastCounted)}</span>
           </div>
@@ -6261,6 +6341,16 @@ function setQty(id,val){
 }
 
 // ── DELIVERY ──
+function calcUnitPrice(){
+  const qty=parseInt(document.getElementById('new-item-qty').value)||0;
+  const total=parseFloat(document.getElementById('new-item-price').value);
+  const unit=document.getElementById('new-item-unit-del').value.trim()||'unit';
+  const row=document.getElementById('unit-price-row');
+  if(qty>0&&!isNaN(total)&&total>0){
+    document.getElementById('unit-price-display').textContent='$'+(total/qty).toFixed(2)+' / '+unit;
+    row.style.display='';
+  }else{row.style.display='none';}
+}
 let caseRowActive=false;
 function showCaseRow(defaultPack){
   caseRowActive=true;
@@ -6282,6 +6372,7 @@ function updateQtyFromCases(){
   const q=p?c*p:null;
   document.getElementById('new-item-qty').value=q||'';
   document.getElementById('case-qty-label').textContent=q?q+' units':'—';
+  calcUnitPrice();
 }
 function syncQtyFromBottles(){}
 function openDelivery(){
@@ -6301,7 +6392,7 @@ function renderDelRows(){
   list.style.display='';
   list.innerHTML=delRows.map(r=>`<div class="pending-row">
     <div><div class="pending-row-name">${r.name}${r.isNew?' <span style="font-size:11px;color:var(--text2)">(new)</span>':''}</div>
-    <div class="pending-row-meta">${r.size||''} · ${r.casesUsed&&r.packSize?r.casesUsed+' × '+r.packSize+'-pack = '+r.qty+' units':'qty '+r.qty} · ${fmtPrice(r.price)}</div></div>
+    <div class="pending-row-meta">${r.size||''}${r.unit?' ('+r.unit+')':''} · ${r.casesUsed&&r.packSize?r.casesUsed+'×'+r.packSize+' = '+r.qty:'qty '+r.qty} · ${r.totalPrice!=null?'$'+Number(r.totalPrice).toFixed(2)+' total'+(r.unitPrice!=null?' ($'+Number(r.unitPrice).toFixed(2)+'/'+r.unit+')':''):'no price'}</div></div>
     <button class="pending-rm" onclick="removeDelRow(${r.tempId})">×</button>
   </div>`).join('');
   count.textContent=`${delRows.length} item${delRows.length!==1?'s':''} added`;
@@ -6314,16 +6405,20 @@ function addDelRow(){
   const type=existing?existing.type:resolveType('new-item-type','new-item-type-custom');
   const cat=existing?existing.cat:document.getElementById('new-item-cat').value;
   const par=existing?existing.par:(parseFloat(document.getElementById('new-item-par').value)||2);
-  const unit=existing?existing.unit:(document.getElementById('new-item-unit').value.trim()||'bottle');
+  const unitDel=document.getElementById('new-item-unit-del').value.trim()||(existing?existing.unit:'bottle');
   const loc=existing?existing.location:document.getElementById('new-item-loc').value;
   const reorderAt=existing?existing.reorderAt:(parseFloat(document.getElementById('new-item-reorder-at').value)||0.5);
   const packSize=caseRowActive?(parseInt(document.getElementById('new-item-pack-size').value)||null):null;
   const casesUsed=packSize?(parseInt(document.getElementById('new-item-cases').value)||1):null;
-  delRows.push({tempId:delRowId++,name:existing?existing.name:name,size:size||(existing?existing.size:''),qty,casesUsed,packSize,price:price!=null?price:(existing?existing.price:null),isNew:!existing,type,cat,par,unit,loc,reorderAt});
-  ['new-item-name','new-item-size','new-item-price'].forEach(id=>document.getElementById(id).value='');
+  const totalPrice=price;
+  const unitPrice=(qty>0&&totalPrice!=null)?parseFloat((totalPrice/qty).toFixed(4)):null;
+  delRows.push({tempId:delRowId++,name:existing?existing.name:name,size:size||(existing?existing.size:''),qty,casesUsed,packSize,unit:unitDel,totalPrice,unitPrice,isNew:!existing,type,cat,par,loc,reorderAt});
+  ['new-item-name','new-item-size','new-item-price','new-item-unit-del'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-item-qty').value=1;
   hideCaseRow();
   document.getElementById('new-item-pack-size').value='';
+  document.getElementById('unit-price-row').style.display='none';
+  document.getElementById('price-hint-row').style.display='none';
   document.getElementById('newItemExtra').classList.remove('show');
   renderDelRows();document.getElementById('new-item-name').focus();
 }
@@ -6336,7 +6431,7 @@ function saveDelivery(){
     let item=items.find(i=>i.name.toLowerCase()===r.name.toLowerCase());
     if(!item){
       const maxSort=items.length?Math.max(...items.map(i=>i.sortOrder??0)):0;
-      item={id:nextId++,name:r.name,type:r.type||'',cat:r.cat,vendor,size:r.size,unit:r.unit||'bottle',price:r.price,par:r.par,reorderAt:r.reorderAt,qty:r.qty,location:r.loc||'display',sortOrder:maxSort+1};
+      item={id:nextId++,name:r.name,type:r.type||'',cat:r.cat,vendor,size:r.size,unit:r.unit||'bottle',price:r.unitPrice!=null?r.unitPrice:null,par:r.par,reorderAt:r.reorderAt,qty:r.qty,location:r.loc||'display',sortOrder:maxSort+1};
       items.push(item);
     } else {
       const beforeCount=item.lastCounted&&date<=item.lastCounted;
@@ -6346,9 +6441,9 @@ function saveDelivery(){
         item.qty+=r.qty;
       }
       item.vendor=vendor;
-      if(r.size)item.size=r.size;if(r.price!=null)item.price=r.price;
+      if(r.size)item.size=r.size;if(r.unit)item.unit=r.unit;if(r.unitPrice!=null)item.price=r.unitPrice;
     }
-    orders.push({date,itemId:item.id,qty:r.qty,casesUsed:r.casesUsed||null,packSize:r.packSize||null,vendor,cat:item.cat,price:r.price!=null?r.price:item.price,size:r.size||item.size,type:'delivery'});
+    orders.push({date,itemId:item.id,qty:r.qty,casesUsed:r.casesUsed||null,packSize:r.packSize||null,unit:r.unit||item.unit||'bottle',vendor,cat:item.cat,totalPrice:r.totalPrice!=null?r.totalPrice:null,unitPrice:r.unitPrice!=null?r.unitPrice:null,price:r.unitPrice!=null?r.unitPrice:item.price,size:r.size||item.size,type:'delivery'});
   });
   closeModals();render();saveData();
   if(skipped.length){
@@ -6409,13 +6504,38 @@ function openEdit(id){
   document.getElementById('edit-vendor').value=item.vendor||'';
   document.getElementById('edit-loc').value=item.location||'display';
   document.getElementById('edit-archived').checked=!!item.archived;
-  buildTypeSelect('edit-type',item.type||'');
+  buildTypeSelect('edit-type',item.type||'',item.cat);
   document.getElementById('edit-cat').value=item.cat;
   document.getElementById('edit-type-custom-row').style.display='none';
   const svcRow=document.getElementById('edit-service-row');
   if(item.cat==='Wine'){svcRow.style.display='';document.getElementById('edit-service').value=item.service||'bottle';}
   else{svcRow.style.display='none';}
+  renderItemHistory(id);
   document.getElementById('editModal').classList.add('open');
+}
+function renderItemHistory(itemId){
+  const el=document.getElementById('edit-history-list');if(!el)return;
+  const entries=[
+    ...orders.filter(o=>o.itemId===itemId).map(o=>({date:o.date,qty:o.qty,vendor:o.vendor,price:o.price,unit:o.unit,size:o.size,_t:o.type})),
+    ...backorders.filter(b=>b.itemId===itemId).map(b=>({date:b.date,qty:b.qty,vendor:b.vendor,price:null,_t:'backorder'})),
+    ...backorders.filter(b=>b.itemId===itemId&&b.resolved).map(b=>({date:b.resolvedDate,qty:b.resolvedQty,vendor:b.vendor,price:null,_t:'resolution'})),
+  ].filter(e=>e.date).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!entries.length){el.innerHTML='<div class="history-empty">No orders logged for this item yet.</div>';return;}
+  el.innerHTML=entries.map(e=>{
+    const typeLbl=e._t==='delivery'?'Delivery':e._t==='backorder'?'Backordered':e._t==='resolution'?'Received (BO)':(e._t||'');
+    const typeCls=e._t==='delivery'?'badge-ok':e._t==='backorder'?'badge-bo':'badge-cat';
+    return`<div class="history-row">
+      <div class="history-row-left">
+        <div class="history-date">${fmtDate(e.date)}</div>
+        <div class="history-meta">
+          <span>${e.qty!=null?e.qty:'?'} ${e.unit||''} ${e.size?'('+e.size+')':''}</span>
+          <span>${e.vendor||''}</span>
+          ${typeLbl?`<span class="badge ${typeCls}">${typeLbl}</span>`:''}
+        </div>
+      </div>
+      <div class="history-price">${fmtPrice(e.price)}</div>
+    </div>`;
+  }).join('');
 }
 function saveEdit(){
   const id=parseInt(document.getElementById('edit-id').value),item=items.find(i=>i.id===id);if(!item)return;
@@ -6503,8 +6623,9 @@ function renderOrders(){
       return`<div class="order-item${o._t==='backorder'?' bo-row':''}">
         <div class="order-item-name">${name}</div>
         <div class="order-item-meta">
-          <span>${o.qty||'?'} ${item?item.unit:''}</span>
-          ${o.price!=null?`<span>${fmtPrice(o.price)}</span>`:''}
+          <span>${o.qty||'?'} ${o.unit||item?.unit||''} ${o.size?'('+o.size+')':''}</span>
+          ${o.totalPrice!=null?`<span>$${Number(o.totalPrice).toFixed(2)}</span>`:o.price!=null?`<span>${fmtPrice(o.price)}</span>`:''}
+          ${o.unitPrice!=null?`<span style="font-size:11px;color:var(--text2)">$${Number(o.unitPrice).toFixed(2)}/${o.unit||item?.unit||'unit'}</span>`:''}
           <span class="badge ${typeCls}">${typeLbl}</span>
           <span>${o.vendor||''}</span>
         </div>
@@ -6850,11 +6971,19 @@ function switchTab(tab){
   if(tab==='reorder')renderReorder();
   if(tab==='prices')renderPrices();
 }
+let priceView='history';
+function setPriceView(v){
+  priceView=v;
+  document.getElementById('priceViewBtn-history').className='btn'+(v==='history'?' btn-primary':'');
+  document.getElementById('priceViewBtn-missing').className='btn'+(v==='missing'?' btn-primary':'');
+  renderPrices();
+}
 function renderPrices(){
   const body=document.getElementById('pricesBody');
+  if(priceView==='missing'){renderMissingPrices();return;}
   const search=(document.getElementById('priceSearch')?.value||'').toLowerCase();
   const catF=document.getElementById('priceCat')?.value||'';
-  const dels=orders.filter(o=>o.type==='delivery'&&o.price!=null);
+  const dels=orders.filter(o=>o.type==='delivery'&&(o.unitPrice!=null||o.price!=null));
   if(!dels.length){body.innerHTML='<p class="section-note" style="padding:16px 0">No deliveries with price data yet.</p>';return;}
   const byItem={};
   dels.forEach(o=>{
@@ -6870,23 +6999,95 @@ function renderPrices(){
   const sorted=Object.values(byItem).sort((a,b)=>a.item.name.localeCompare(b.item.name));
   if(!sorted.length){body.innerHTML='<p class="section-note" style="padding:16px 0">No results.</p>';return;}
   body.innerHTML=sorted.map(({item,variants})=>{
-    const rows=Object.entries(variants).map(([key,os])=>{
+    // Latest unit price across all variants for header summary
+    const allItemDels=orders.filter(o=>o.itemId===item.id&&o.type==='delivery').sort((a,b)=>b.date.localeCompare(a.date));
+    const latestDel=allItemDels[0];
+    const latestUp=latestDel?.unitPrice??latestDel?.price;
+    const unitLabel=latestDel?.unit||item.unit||'unit';
+
+    const variantRows=Object.entries(variants).map(([key,os])=>{
       const [sz,ps]=key.split('||');
       const latest=os.sort((a,b)=>b.date.localeCompare(a.date))[0];
       const packLabel=ps?' · '+ps+'-pack':'';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border)">
+      const up=latest.unitPrice??latest.price;
+      const ul=latest.unit||item.unit||'unit';
+      const casePrice=up!=null&&ps?up*parseInt(ps):null;
+      return `<div style="display:flex;justify-content:space-between;align-items:start;padding:5px 0;border-top:1px solid var(--border);gap:8px">
         <div style="min-width:0">
           <span style="font-size:13px">${sz||'—'}${packLabel}</span>
           <span style="font-size:11px;color:var(--text2);margin-left:8px">${latest.vendor||''} · ${fmtDate(latest.date)}</span>
         </div>
-        <span style="font-weight:600;font-size:14px;white-space:nowrap;margin-left:8px">${fmtPrice(latest.price)}</span>
+        <div style="text-align:right;white-space:nowrap;flex-shrink:0">
+          ${up!=null?`<div style="font-weight:600;font-size:14px">${fmtPrice(up)}/${ul}</div>`:''}
+          ${casePrice!=null?`<div style="font-size:11px;color:var(--text2)">${fmtPrice(casePrice)}/case</div>`:''}
+          ${latest.totalPrice!=null?`<div style="font-size:11px;color:var(--text2)">${fmtPrice(latest.totalPrice)} total paid</div>`:''}
+        </div>
       </div>`;
     }).join('');
-    return `<div class="group-card" style="margin-bottom:8px;padding:10px 14px">
-      <div style="font-weight:600;font-size:14px;margin-bottom:2px">${item.name}</div>
-      ${rows}
+
+    const historyRows=allItemDels.map(o=>{
+      const ul=o.unit||item.unit||'unit';
+      const up=o.unitPrice??o.price;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid var(--border);gap:6px">
+        <div style="min-width:0">
+          <span style="font-size:12px">${fmtDate(o.date)}</span>
+          <span style="font-size:11px;color:var(--text2);margin-left:6px">${o.vendor||''}</span>
+        </div>
+        <div style="text-align:right;white-space:nowrap;flex-shrink:0;font-size:12px">
+          <span>${o.qty} ${ul}${o.packSize?' ('+o.packSize+'-pack)':''}</span>
+          ${o.totalPrice!=null?`<span style="margin-left:6px;font-weight:600">${fmtPrice(o.totalPrice)}</span>`:''}
+          ${up!=null?`<span style="margin-left:4px;color:var(--text2)">${fmtPrice(up)}/${ul}</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="group-card" style="margin-bottom:8px;padding:0;overflow:hidden">
+      <div onclick="const b=this.nextElementSibling,open=b.style.display==='block';b.style.display=open?'none':'block';this.querySelector('.pc-chev').style.transform=open?'':'rotate(180deg)'" style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div>
+          <div style="font-weight:600;font-size:14px">${item.name}</div>
+          ${latestUp!=null?`<div style="font-size:12px;color:var(--text2)">${fmtPrice(latestUp)}/${unitLabel}${item.caseSize&&!item.individual?' · '+fmtPrice(latestUp*item.caseSize)+'/case':''}</div>`:''}
+        </div>
+        <span class="pc-chev" style="font-size:18px;color:var(--text2);transition:transform 0.2s;flex-shrink:0">⌄</span>
+      </div>
+      <div style="display:none;padding:0 14px 12px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;padding:8px 0 2px">By size &amp; pack</div>
+        ${variantRows}
+        ${allItemDels.length>0?`<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;padding:10px 0 2px">Delivery history</div>${historyRows}`:''}
+      </div>
     </div>`;
   }).join('');
+}
+function renderMissingPrices(){
+  const body=document.getElementById('pricesBody');
+  const search=(document.getElementById('priceSearch')?.value||'').toLowerCase();
+  const catF=document.getElementById('priceCat')?.value||'';
+  // Items with no price on the item AND no delivery with a price
+  const itemsWithPrice=new Set(orders.filter(o=>o.type==='delivery'&&(o.unitPrice!=null||o.price!=null)).map(o=>o.itemId));
+  const CAT_PRIORITY={Spirits:0,Beer:1,Wine:2,Beverages:3,Ingredients:4,Supplies:5};
+  const missing=items.filter(i=>{
+    if(i.archived)return false;
+    if(i.price!=null||itemsWithPrice.has(i.id))return false;
+    if(catF&&i.cat!==catF)return false;
+    if(search&&!i.name.toLowerCase().includes(search))return false;
+    return true;
+  }).sort((a,b)=>(CAT_PRIORITY[a.cat]??9)-(CAT_PRIORITY[b.cat]??9)||a.name.localeCompare(b.name));
+  if(!missing.length){
+    body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--text2)">✓ No missing prices'+(catF?' in '+catF:'')+'</div>';
+    return;
+  }
+  // Group by category
+  const byCat={};
+  missing.forEach(i=>{if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  body.innerHTML=Object.entries(byCat).sort(([a],[b])=>(CAT_PRIORITY[a]??9)-(CAT_PRIORITY[b]??9)).map(([cat,catItems])=>`
+    <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;padding:10px 0 4px">${cat} <span style="font-weight:400">(${catItems.length})</span></div>
+    ${catItems.map(i=>`<div class="group-card" style="margin-bottom:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center" onclick="navTo('inventory');setTimeout(()=>openEdit(${i.id}),200)">
+      <div>
+        <div style="font-weight:600;font-size:14px">${i.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${i.type||''} · ${i.size||'no size set'} · ${i.vendor||'no vendor'}</div>
+      </div>
+      <span style="font-size:18px;color:var(--text3)">›</span>
+    </div>`).join('')}
+  `).join('');
 }
 function exportData(){
   const raw=localStorage.getItem('bar_inventory_v3');
@@ -6950,9 +7151,14 @@ function pickAc(acId,val){
     if(ex){
       document.getElementById('new-item-size').value=ex.size||'';
       const lastDel=orders.filter(o=>o.itemId===ex.id&&o.type==='delivery').sort((a,b)=>b.date.localeCompare(a.date))[0];
-      if(lastDel){if(lastDel.price!=null)document.getElementById('new-item-price').value=lastDel.price;if(lastDel.size)document.getElementById('new-item-size').value=lastDel.size;}
+      if(lastDel&&lastDel.size)document.getElementById('new-item-size').value=lastDel.size;
+      document.getElementById('new-item-unit-del').value=lastDel?.unit||ex.unit||'';
+      const lp=lastDel?.unitPrice??lastDel?.price??null;
+      const ph=document.getElementById('price-hint-row');
+      if(lp){ph.style.display='';document.getElementById('price-hint').textContent='Last unit price: $'+Number(lp).toFixed(2)+'/'+(lastDel?.unit||ex.unit||'unit')+(lastDel?.size?' ('+lastDel.size+')':'');}else{ph.style.display='none';}
       if(!ex.individual&&(['Beer','Wine','Beverages'].includes(ex.cat)||ex.caseSize)){showCaseRow((lastDel&&lastDel.packSize)||ex.caseSize||null);}
       else{hideCaseRow();}
+      if(lastDel?.totalPrice!=null){document.getElementById('new-item-price').value=lastDel.totalPrice;calcUnitPrice();}
     }else{hideCaseRow();}
     document.getElementById('newItemExtra').classList.toggle('show',!ex);
     if(!ex)buildTypeSelect('new-item-type','');
@@ -6969,9 +7175,14 @@ function acItem(){
   const exact=items.find(i=>i.name.toLowerCase()===q);
   if(exact){
     const lastDel2=orders.filter(o=>o.itemId===exact.id&&o.type==='delivery').sort((a,b)=>b.date.localeCompare(a.date))[0];
-    if(lastDel2){if(lastDel2.price!=null)document.getElementById('new-item-price').value=lastDel2.price;if(lastDel2.size)document.getElementById('new-item-size').value=lastDel2.size;}
+    if(lastDel2&&lastDel2.size)document.getElementById('new-item-size').value=lastDel2.size;
+    document.getElementById('new-item-unit-del').value=lastDel2?.unit||exact.unit||'';
+    const lp2=lastDel2?.unitPrice??lastDel2?.price??null;
+    const ph2=document.getElementById('price-hint-row');
+    if(lp2){ph2.style.display='';document.getElementById('price-hint').textContent='Last unit price: $'+Number(lp2).toFixed(2)+'/'+(lastDel2?.unit||exact.unit||'unit')+(lastDel2?.size?' ('+lastDel2.size+')':'');}else{ph2.style.display='none';}
     if(!exact.individual&&(['Beer','Wine','Beverages'].includes(exact.cat)||exact.caseSize)){showCaseRow((lastDel2&&lastDel2.packSize)||exact.caseSize||null);}
     else if(q.length>0){hideCaseRow();}
+    if(lastDel2?.totalPrice!=null){document.getElementById('new-item-price').value=lastDel2.totalPrice;calcUnitPrice();}
   }else if(q.length>0){hideCaseRow();}
   document.getElementById('newItemExtra').classList.toggle('show',!exact&&q.length>0);
   if(!exact&&q.length>0)buildTypeSelect('new-item-type','');
