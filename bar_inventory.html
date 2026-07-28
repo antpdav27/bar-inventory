@@ -5704,11 +5704,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>Edit item</h2>
-    <p class="modal-sub">Fix any details. Won't change past order history.</p>
+    <p class="modal-sub">Fix any details. Won't change past counts.</p>
     <input type="hidden" id="edit-id">
     <div class="form-row"><label>Item name</label><input type="text" id="edit-name"></div>
     <div class="form-row">
-      <label>Order history</label>
+      <label>Count history</label>
       <div class="history-list" id="edit-history-list"></div>
     </div>
     <div class="form-row-2">
@@ -6611,27 +6611,44 @@ function openEdit(id){
 }
 function renderItemHistory(itemId){
   const el=document.getElementById('edit-history-list');if(!el)return;
-  const entries=[
-    ...orders.filter(o=>o.itemId===itemId).map(o=>({date:o.date,qty:o.qty,vendor:o.vendor,price:o.price,unit:o.unit,size:o.size,_t:o.type})),
-    ...backorders.filter(b=>b.itemId===itemId).map(b=>({date:b.date,qty:b.qty,vendor:b.vendor,price:null,_t:'backorder'})),
-    ...backorders.filter(b=>b.itemId===itemId&&b.resolved).map(b=>({date:b.resolvedDate,qty:b.resolvedQty,vendor:b.vendor,price:null,_t:'resolution'})),
-  ].filter(e=>e.date).sort((a,b)=>b.date.localeCompare(a.date));
-  if(!entries.length){el.innerHTML='<div class="history-empty">No orders logged for this item yet.</div>';return;}
-  el.innerHTML=entries.map(e=>{
-    const typeLbl=e._t==='delivery'?'Delivery':e._t==='backorder'?'Backordered':e._t==='resolution'?'Received (BO)':(e._t||'');
-    const typeCls=e._t==='delivery'?'badge-ok':e._t==='backorder'?'badge-bo':'badge-cat';
-    return`<div class="history-row">
-      <div class="history-row-left">
-        <div class="history-date">${fmtDate(e.date)}</div>
-        <div class="history-meta">
-          <span>${e.qty!=null?e.qty:'?'} ${e.unit||''} ${e.size?'('+e.size+')':''}</span>
-          <span>${e.vendor||''}</span>
-          ${typeLbl?`<span class="badge ${typeCls}">${typeLbl}</span>`:''}
-        </div>
+  const item=items.find(i=>i.id===itemId);
+  const unit=(item&&item.unit)||'';
+  const relevant=snapshots.filter(s=>itemId in s.counts).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  if(!relevant.length){el.innerHTML='<div class="history-empty">No counts saved yet for this item.</div>';return;}
+  const latest=relevant[0];
+  const prev=relevant[1]||null;
+  const countRow=(snap)=>`<div class="history-row">
+    <div class="history-row-left">
+      <div class="history-date">${fmtDate(snap.date)}</div>
+      <div class="history-meta"><span class="badge badge-cat">Count</span></div>
+    </div>
+    <div class="history-price">${snap.counts[itemId]} ${unit}</div>
+  </div>`;
+  const increaseRow=(o)=>`<div class="history-row">
+    <div class="history-row-left">
+      <div class="history-date">${fmtDate(o.date)}</div>
+      <div class="history-meta">
+        <span>${o.vendor||''}</span>
+        <span class="badge badge-ok">${o.type==='delivery'?'Received':'Received (BO)'}</span>
       </div>
-      <div class="history-price">${fmtPrice(e.price)}</div>
-    </div>`;
-  }).join('');
+    </div>
+    <div class="history-price">+${o.qty!=null?o.qty:'?'} ${o.unit||unit}</div>
+  </div>`;
+  let html=countRow(latest);
+  if(prev){
+    const between=orders.filter(o=>o.itemId===itemId&&o.date>prev.date&&o.date<=latest.date&&(o.type==='delivery'||o.type==='received (BO)'))
+      .sort((a,b)=>b.date.localeCompare(a.date));
+    html+=between.map(increaseRow).join('');
+    html+=countRow(prev);
+    const received=between.reduce((s,o)=>s+(o.qty||0),0);
+    const usage=prev.counts[itemId]+received-latest.counts[itemId];
+    const days=Math.max(1,Math.round((new Date(latest.date+'T12:00:00')-new Date(prev.date+'T12:00:00'))/86400000));
+    const perDay=(usage/days).toFixed(2);
+    html+=`<div class="history-empty" style="text-align:left">Used ${usage} ${unit} over ${days} day${days!==1?'s':''} (~${perDay}/day)${received?` — includes ${received} ${unit} received`:''}</div>`;
+  }else{
+    html+=`<div class="history-empty">Save one more count to see usage between counts.</div>`;
+  }
+  el.innerHTML=html;
 }
 function saveEdit(){
   const id=parseInt(document.getElementById('edit-id').value),item=items.find(i=>i.id===id);if(!item)return;
