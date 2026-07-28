@@ -6063,28 +6063,38 @@ function loadData(){
         completedMigrations.add('weller-green-buffalo-trace-cage');
         migrated=true;
       }
-      // Migration: whiskey wall reorder from July 2026 walkthrough — merges Bourbon/Rye/Scotch/
-      // Japanese/Irish/Blended whiskey items onto one continuous shelf-order list (top → bottom
-      // shelf) instead of splitting them into separate type cards, so counting can go straight
-      // through the physical wall in one pass.
-      if(!completedMigrations.has('whiskey-shelf-reorder-july-2026')&&!items.some(i=>i.id===83&&i.sortOrder===100010)){
+      // Migration: whiskey wall reorder from July 2026 walkthrough — puts Bourbon/Rye/Scotch/
+      // Japanese/Irish/Blended whiskey items in one continuous shelf-order sequence (top → bottom
+      // shelf), in the same low sortOrder range the whiskey wall already occupied (so it stays the
+      // first section counted, same as before — not pushed to the end of the whole inventory).
+      // Items in this set share a shelfGroup label purely for display; render() no longer sorts by
+      // group, it just walks the flat sortOrder list and prints a header whenever the label changes,
+      // so a stray leftover item's old sortOrder can't yank a whole section out of place anymore.
+      // Scotch items NOT on this list (Ardbeg 10, Lagavulin 16, Peat Monster, Buchanan's 18 /
+      // Pineapple) are moved just after the wall (615–655) so they don't dangle at old low values.
+      if(!completedMigrations.has('whiskey-shelf-reorder-july-2026')){
         const WHISKEY_SHELF_ORDER={
           // top shelf
-          83:100010,82:100020,93:100030,76:100040,89:100050,86:100060,85:100070,84:100080,95:100090,
-          87:100100,88:100110,90:100120,91:100130,92:100140,112:100150,113:100160,114:100170,115:100180,
-          116:100190,120:100200,
+          83:10,82:20,93:30,76:40,89:50,86:60,85:70,84:80,95:90,
+          87:100,88:110,90:120,91:130,92:140,112:150,113:160,114:170,115:180,
+          116:190,120:200,
           // next shelf
-          94:100210,77:100220,78:100230,79:100240,80:100250,81:100260,271:100270,97:100280,98:100290,
-          99:100300,100:100310,101:100320,102:100330,104:100340,105:100350,106:100360,107:100370,
-          108:100380,109:100390,110:100400,111:100410,
+          94:210,77:220,78:230,79:240,80:250,81:260,271:270,97:280,98:290,
+          99:300,100:310,101:320,102:330,104:340,105:350,106:360,107:370,
+          108:380,109:390,110:400,111:410,
           // next shelf
-          57:100420,58:100430,59:100440,60:100450,61:100460,62:100470,63:100480,64:100490,65:100500,
-          66:100510,67:100520,56:100530,72:100540,68:100550,69:100560,70:100570,71:100580,75:100590,
-          74:100600,73:100610
+          57:420,58:430,59:440,60:450,61:460,62:470,63:480,64:490,65:500,
+          66:510,67:520,56:530,72:540,68:550,69:560,70:570,71:580,75:590,
+          74:600,73:605
         };
         const WHISKEY_SHELF_GROUP='Spirits — Whiskey Wall';
         items.forEach(i=>{
           if(WHISKEY_SHELF_ORDER[i.id]!==undefined){i.sortOrder=WHISKEY_SHELF_ORDER[i.id];i.shelfGroup=WHISKEY_SHELF_GROUP;}
+        });
+        // Leftover Scotch items not named in the walkthrough — park them right after the wall.
+        const LEFTOVER_SCOTCH={103:615,119:625,121:635,117:645,118:655};
+        items.forEach(i=>{
+          if(LEFTOVER_SCOTCH[i.id]!==undefined){i.sortOrder=LEFTOVER_SCOTCH[i.id];delete i.shelfGroup;}
         });
         completedMigrations.add('whiskey-shelf-reorder-july-2026');
         migrated=true;
@@ -6113,19 +6123,23 @@ function loadData(){
       completedMigrations.add('whiskey-shelf-reorder-july-2026');
       {
         const WHISKEY_SHELF_ORDER={
-          83:100010,82:100020,93:100030,76:100040,89:100050,86:100060,85:100070,84:100080,95:100090,
-          87:100100,88:100110,90:100120,91:100130,92:100140,112:100150,113:100160,114:100170,115:100180,
-          116:100190,120:100200,
-          94:100210,77:100220,78:100230,79:100240,80:100250,81:100260,271:100270,97:100280,98:100290,
-          99:100300,100:100310,101:100320,102:100330,104:100340,105:100350,106:100360,107:100370,
-          108:100380,109:100390,110:100400,111:100410,
-          57:100420,58:100430,59:100440,60:100450,61:100460,62:100470,63:100480,64:100490,65:100500,
-          66:100510,67:100520,56:100530,72:100540,68:100550,69:100560,70:100570,71:100580,75:100590,
-          74:100600,73:100610
+          83:10,82:20,93:30,76:40,89:50,86:60,85:70,84:80,95:90,
+          87:100,88:110,90:120,91:130,92:140,112:150,113:160,114:170,115:180,
+          116:190,120:200,
+          94:210,77:220,78:230,79:240,80:250,81:260,271:270,97:280,98:290,
+          99:300,100:310,101:320,102:330,104:340,105:350,106:360,107:370,
+          108:380,109:390,110:400,111:410,
+          57:420,58:430,59:440,60:450,61:460,62:470,63:480,64:490,65:500,
+          66:510,67:520,56:530,72:540,68:550,69:560,70:570,71:580,75:590,
+          74:600,73:605
         };
         const WHISKEY_SHELF_GROUP='Spirits — Whiskey Wall';
         items.forEach(i=>{
           if(WHISKEY_SHELF_ORDER[i.id]!==undefined){i.sortOrder=WHISKEY_SHELF_ORDER[i.id];i.shelfGroup=WHISKEY_SHELF_GROUP;}
+        });
+        const LEFTOVER_SCOTCH={103:615,119:625,121:635,117:645,118:655};
+        items.forEach(i=>{
+          if(LEFTOVER_SCOTCH[i.id]!==undefined){i.sortOrder=LEFTOVER_SCOTCH[i.id];delete i.shelfGroup;}
         });
       }
       saveData();
@@ -6267,40 +6281,40 @@ function render(){
     if(refreshTypeFilter()){render();return;}
     updateSummary(filtered);return;
   }
-  // Group by category + type, preserving sort order within each group
-  const groups={};
-  filtered.forEach(i=>{
-    const g=i.shelfGroup||(i.cat+(i.type?' — '+i.type:''));
-    if(!groups[g])groups[g]=[];
-    groups[g].push(i);
-  });
-  // Sort groups by first item's sortOrder so groups themselves appear in shelf order
-  const groupEntries=Object.entries(groups).sort(([,a],[,b])=>(a[0].sortOrder??9999)-(b[0].sortOrder??9999));
+  // Render as one flat list in pure sortOrder — no grouping/sorting by category or type.
+  // A label is printed whenever it changes from the previous item, purely as a passive visual
+  // divider; it never re-sorts or re-buckets anything, so items always appear in exactly the
+  // sortOrder sequence, with no risk of a stray leftover item's old value pulling a whole
+  // section out of place.
   let html='';
-  groupEntries.forEach(([grp,gitems])=>{
-    html+=`<div class="group-card" data-group="${grp}">`;
-    html+=`<div class="group-header">${grp}${reorderMode?'<span class="reorder-mode-hint">drag ↕ to reorder</span>':''}</div>`;
-    gitems.forEach(i=>{
-      html+=`<div class="item-row${reorderMode?' reorder-mode':' clickable'}" data-id="${i.id}" draggable="${reorderMode}"${reorderMode?'':` onclick="openEdit(${i.id})"`}>
-        <div class="item-row-top">
-          <span class="drag-handle" title="Drag to reorder">⠿</span>
-          <span class="item-name">${i.name}</span>
-          ${statusBadge(i)}
+  let lastLabel=null;
+  filtered.forEach(i=>{
+    const label=i.shelfGroup||(i.cat+(i.type?' — '+i.type:''));
+    if(label!==lastLabel){
+      if(lastLabel!==null)html+='</div>';
+      html+=`<div class="group-card" data-group="${label}">`;
+      html+=`<div class="group-header">${label}${reorderMode?'<span class="reorder-mode-hint">drag ↕ to reorder</span>':''}</div>`;
+      lastLabel=label;
+    }
+    html+=`<div class="item-row${reorderMode?' reorder-mode':' clickable'}" data-id="${i.id}" draggable="${reorderMode}"${reorderMode?'':` onclick="openEdit(${i.id})"`}>
+      <div class="item-row-top">
+        <span class="drag-handle" title="Drag to reorder">⠿</span>
+        <span class="item-name">${i.name}</span>
+        ${statusBadge(i)}
+      </div>
+      <div class="item-meta">${locBadge(i.location)}<span style="font-size:12px;color:var(--text2)">${i.size||''}</span><span class="badge badge-cat">${i.unit}</span>${i.cat==='Wine'&&i.service?`<span class="badge ${i.service==='glass'?'badge-ok':i.service==='glass-hh'?'badge-low':'badge-cat'}" style="font-size:11px">${i.service==='glass'?'glass & btl':i.service==='glass-hh'?'HH glass':'btl only'}</span>`:''}</div>
+      <div class="item-row-bottom">
+        <div class="item-details">
+          <span>Par: ${i.par} · reorder ≤${i.reorderAt}</span>
+          ${i.price!=null?`<span>${fmtPrice(i.price)}/${i.unit||'unit'}${i.caseSize&&!i.individual?' · '+fmtPrice(i.price*i.caseSize)+'/case ('+i.caseSize+')':''}</span>`:''}
+          <span>${i.vendor||''}</span>
+          <span class="count-date">${relTime(i.lastCounted)}</span>
         </div>
-        <div class="item-meta">${locBadge(i.location)}<span style="font-size:12px;color:var(--text2)">${i.size||''}</span><span class="badge badge-cat">${i.unit}</span>${i.cat==='Wine'&&i.service?`<span class="badge ${i.service==='glass'?'badge-ok':i.service==='glass-hh'?'badge-low':'badge-cat'}" style="font-size:11px">${i.service==='glass'?'glass & btl':i.service==='glass-hh'?'HH glass':'btl only'}</span>`:''}</div>
-        <div class="item-row-bottom">
-          <div class="item-details">
-            <span>Par: ${i.par} · reorder ≤${i.reorderAt}</span>
-            ${i.price!=null?`<span>${fmtPrice(i.price)}/${i.unit||'unit'}${i.caseSize&&!i.individual?' · '+fmtPrice(i.price*i.caseSize)+'/case ('+i.caseSize+')':''}</span>`:''}
-            <span>${i.vendor||''}</span>
-            <span class="count-date">${relTime(i.lastCounted)}</span>
-          </div>
-          ${qtyCellHtml(i)}
-        </div>
-      </div>`;
-    });
-    html+=`</div>`;
+        ${qtyCellHtml(i)}
+      </div>
+    </div>`;
   });
+  html+='</div>';
   list.innerHTML=html;
   if(reorderMode)attachDragHandlers();
   if(refreshTypeFilter()){render();return;}
